@@ -9,9 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "baseui": "^0.0.0-next-2113e1821",
+    "next": "15.1.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.1.4"
+    "styletron-engine-monolithic": "^1.0.0",
+    "styletron-react": "^6.1.1"
   },
   "devDependencies": {
     "postcss": "^8",
