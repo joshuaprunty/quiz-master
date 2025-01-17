@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+
 export default function Home() {
   return (
     <main className="min-h-screen font-[family-name:var(--font-sans)]">
@@ -84,7 +85,6 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-12">Second Section</h2>
           <Card className="w-full max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2">
-              {/* Image half */}
               <div className="relative h-[300px] md:h-full">
                 <Image
                   src="/studying.jpg"
@@ -93,8 +93,6 @@ export default function Home() {
                   className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
                 />
               </div>
-              
-              {/* Content half */}
               <div className="p-6 flex flex-col justify-between">
                 <div>
                   <CardHeader className="p-0 mb-4">
@@ -109,7 +107,6 @@ export default function Home() {
                     </p>
                   </CardContent>
                 </div>
-                
                 <CardFooter className="p-0 mt-4">
                   <Button className="w-full">Learn More</Button>
                 </CardFooter>
@@ -124,7 +121,6 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-12">Third Section</h2>
           <Card className="w-full max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2">
-              {/* Image half */}
               <div className="relative h-[300px] md:h-full">
                 <Image
                   src="/studying.jpg"
@@ -133,15 +129,12 @@ export default function Home() {
                   className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
                 />
               </div>
-              
-              {/* Content half */}
               <div className="p-6 flex flex-col justify-between">
                 <div>
                   <CardHeader className="p-0 mb-4">
                     <CardTitle className="text-2xl">Card Title</CardTitle>
                     <CardDescription>This is a brief description of the card content.</CardDescription>
                   </CardHeader>
-                  
                   <CardContent className="p-0">
                     <p className="text-gray-600">
                       Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
@@ -149,7 +142,6 @@ export default function Home() {
                     </p>
                   </CardContent>
                 </div>
-                
                 <CardFooter className="p-0 mt-4">
                   <Button className="w-full">Learn More</Button>
                 </CardFooter>
