@@ -99,7 +99,7 @@ export default function Footer() {
           <div className="mt-8 pt-8 border-t">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="text-sm text-muted-foreground">
-                © 2024 Quiz Master. All rights reserved.
+                © 2025 QuizWiz. All rights reserved.
               </div>
               <div className="flex space-x-6 mt-4 md:mt-0">
                 <a href="https://twitter.com" className="text-muted-foreground hover:text-primary">
