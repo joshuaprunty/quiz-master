@@ -46,32 +46,42 @@ export default function Home() {
 
       <Section backgroundColor="#ffffff">
         <div className="py-12 px-12">
-          <h2 className="text-3xl font-bold">First Section</h2>
-          <Carousel className="w-full max-w-5xl mx-auto" opts={{loop: true,}}>
-            <CarouselContent>
-              {[1, 2, 3].map((_, index) => (
-                <CarouselItem key={index}>
+          <h2 className="text-3xl font-bold mb-12">First Section</h2>
+          <Carousel 
+            className="w-full max-w-5xl mx-auto"
+            opts={{
+              loop: true,
+              align: "start",
+            }}
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {[1, 2, 3, 4, 5].map((_, index) => (
+                <CarouselItem key={index} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
                   <div className="p-1">
                     <Image
                       src="/studying.jpg"
                       alt="Students studying"
-                      width={1200}
-                      height={800}
-                      className="w-full h-auto rounded-lg border-solid border-black border-2"
+                      width={400}
+                      height={300}
+                      className="w-5/6 mx-auto h-auto rounded-lg border border-black"
                     />
                   </div>
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="ml-4" />
-            <CarouselNext className="mr-4" />
+            <CarouselPrevious 
+              className="ml-4 h-12 w-12 md:h-16 md:w-16" 
+            />
+            <CarouselNext 
+              className="mr-4 h-12 w-12 md:h-16 md:w-16" 
+            />
           </Carousel>
         </div>
       </Section>
 
       <Section backgroundColor="#f6f7fb">
         <div className="py-12">
-          <h2 className="text-3xl font-bold">Second Section</h2>
+          <h2 className="text-3xl font-bold mb-12">Second Section</h2>
           <Card className="w-full max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2">
               {/* Image half */}
@@ -111,8 +121,41 @@ export default function Home() {
 
       <Section backgroundColor="#ffffff">
         <div className="py-12">
-          <h2 className="text-3xl font-bold">Third Section</h2>
-          {/* Section content */}
+          <h2 className="text-3xl font-bold mb-12">Third Section</h2>
+          <Card className="w-full max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              {/* Image half */}
+              <div className="relative h-[300px] md:h-full">
+                <Image
+                  src="/studying.jpg"
+                  alt="Students studying"
+                  fill
+                  className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
+                />
+              </div>
+              
+              {/* Content half */}
+              <div className="p-6 flex flex-col justify-between">
+                <div>
+                  <CardHeader className="p-0 mb-4">
+                    <CardTitle className="text-2xl">Card Title</CardTitle>
+                    <CardDescription>This is a brief description of the card content.</CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent className="p-0">
+                    <p className="text-gray-600">
+                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+                      Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                    </p>
+                  </CardContent>
+                </div>
+                
+                <CardFooter className="p-0 mt-4">
+                  <Button className="w-full">Learn More</Button>
+                </CardFooter>
+              </div>
+            </div>
+          </Card>
         </div>
       </Section>
     </main>
