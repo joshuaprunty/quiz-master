@@ -46,7 +46,7 @@ export default function Home() {
       </Section>
 
       <Section backgroundColor="#ffffff" className="min-h-[50vh] flex items-center">
-        <div className="py-12">
+        <div className="py-12 w-full">
           <h2 className="text-3xl font-bold mb-12">First Section</h2>
           <Carousel 
             className="w-full mx-auto"
@@ -82,10 +82,10 @@ export default function Home() {
               ))}
             </CarouselContent>
             <CarouselPrevious 
-              className="ml-4 h-12 w-12 md:h-16 md:w-16" 
+              className="h-12 w-12 md:h-16 md:w-16" 
             />
             <CarouselNext 
-              className="mr-4 h-12 w-12 md:h-16 md:w-16" 
+              className="h-12 w-12 md:h-16 md:w-16" 
             />
           </Carousel>
         </div>
