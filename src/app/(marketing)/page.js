@@ -45,7 +45,7 @@ export default function Home() {
         </div>
       </Section>
 
-      <Section backgroundColor="#ffffff">
+      <Section backgroundColor="#ffffff" className="min-h-[50vh] flex items-center">
         <div className="py-12 px-12">
           <h2 className="text-3xl font-bold mb-12">First Section</h2>
           <Carousel 
@@ -64,7 +64,7 @@ export default function Home() {
                       alt="Students studying"
                       width={400}
                       height={300}
-                      className="w-5/6 mx-auto h-auto rounded-lg border border-black"
+                      className="w-11/12 mx-auto h-80 object-cover rounded-lg border border-black"
                     />
                   </div>
                 </CarouselItem>

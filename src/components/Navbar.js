@@ -3,7 +3,7 @@ import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuL
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-const isAuthenticated = false;
+const isAuthenticated = true;
 
 export default function Navbar() {
   return (
@@ -11,7 +11,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex-shrink-0">
-            <Link href="/" className="font-bold text-xl text-blue-700">
+            <Link href="/" className="font-bold text-2xl text-blue-700">
               QuizWiz
             </Link>
           </div>
@@ -21,7 +21,7 @@ export default function Navbar() {
               <NavigationMenuItem>
                 <Link href="/" legacyBehavior passHref>
                   <NavigationMenuLink className={cn(
-                    "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                    "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                   )}>
                     Home
                   </NavigationMenuLink>
@@ -32,11 +32,9 @@ export default function Navbar() {
                 <NavigationMenuItem>
                   <Link href="/login" legacyBehavior passHref>
                     <NavigationMenuLink className={cn(
-                      "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                      "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors bg-blue-600 hover:bg-blue-700 text-white"
                     )}>
-                      <Button className="bg-blue-600 hover:bg-blue-700">
-                        Log In or Sign Up
-                      </Button>
+                      Log In
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
@@ -44,11 +42,9 @@ export default function Navbar() {
                 <NavigationMenuItem>
                   <Link href="/dashboard" legacyBehavior passHref>
                     <NavigationMenuLink className={cn(
-                      "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                      "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors bg-blue-600 hover:bg-blue-700 text-white"
                     )}>
-                      <Button className="bg-blue-600 hover:bg-blue-700">
-                        Dashboard
-                      </Button>
+                      Dashboard
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
