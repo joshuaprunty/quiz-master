@@ -25,15 +25,15 @@ export default function Navbar() {
                 </Link>
               </NavigationMenuItem>
 
-              <NavigationMenuItem>
-                <Link href="/testpage" legacyBehavior passHref>
+              {/* <NavigationMenuItem>
+                <Link href="/about" legacyBehavior passHref>
                   <NavigationMenuLink className={cn(
                     "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                   )}>
                     About
                   </NavigationMenuLink>
                 </Link>
-              </NavigationMenuItem>
+              </NavigationMenuItem> */}
 
               <NavigationMenuItem>
                 <Link href="/login" legacyBehavior passHref>
@@ -46,11 +46,11 @@ export default function Navbar() {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <Link href="/mainpreauth" legacyBehavior passHref>
+                <Link href="/dashboard" legacyBehavior passHref>
                   <NavigationMenuLink className={cn(
                     "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                   )}>
-                    Main (Pre-Auth)
+                    Dashboard
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
