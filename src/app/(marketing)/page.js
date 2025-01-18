@@ -56,17 +56,28 @@ export default function Home() {
             }}
           >
             <CarouselContent className="-ml-2 md:-ml-4">
-              {[1, 2, 3, 4, 5].map((_, index) => (
+              {[
+                { title: "Study Smart", description: "Efficient learning techniques" },
+                { title: "Quick Quizzes", description: "Test your knowledge" },
+                { title: "Track Progress", description: "Monitor your improvement" },
+                { title: "AI-Powered", description: "Intelligent question generation" },
+                { title: "Customizable", description: "Tailor to your needs" },
+              ].map((item, index) => (
                 <CarouselItem key={index} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
-                  <div className="p-1">
-                    <Image
-                      src="/studying.jpg"
-                      alt="Students studying"
-                      width={400}
-                      height={300}
-                      className="w-11/12 mx-auto h-80 object-cover rounded-lg border border-black"
-                    />
-                  </div>
+                  <Card className="h-full">
+                    <div className="relative h-48">
+                      <Image
+                        src="/studying.jpg"
+                        alt="Students studying"
+                        fill
+                        className="object-cover rounded-t-lg"
+                      />
+                    </div>
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-lg">{item.title}</CardTitle>
+                      <CardDescription>{item.description}</CardDescription>
+                    </CardHeader>
+                  </Card>
                 </CarouselItem>
               ))}
             </CarouselContent>
@@ -93,7 +104,7 @@ export default function Home() {
                   className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
                 />
               </div>
-              <div className="p-6 flex flex-col justify-between">
+              <div className="p-6 flex flex-col justify-center min-h-[30vh]">
                 <div>
                   <CardHeader className="p-0 mb-4">
                     <CardTitle className="text-2xl">Card Title</CardTitle>
@@ -129,7 +140,7 @@ export default function Home() {
                   className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
                 />
               </div>
-              <div className="p-6 flex flex-col justify-between">
+              <div className="p-6 flex flex-col justify-center min-h-[30vh]">
                 <div>
                   <CardHeader className="p-0 mb-4">
                     <CardTitle className="text-2xl">Card Title</CardTitle>
