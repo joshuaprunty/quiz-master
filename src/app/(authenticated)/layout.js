@@ -21,8 +21,8 @@ export default function AuthenticatedLayout({ children }) {
             <Link href="/profile" className="text-lg font-semibold">
               Profile
             </Link>
-            <Link href="/settings" className="text-lg font-semibold">
-              Settings
+            <Link href="/usersettings" className="text-lg font-semibold">
+              User Settings
             </Link>
           </nav>
         </SheetContent>
@@ -30,19 +30,20 @@ export default function AuthenticatedLayout({ children }) {
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex h-screen w-64 flex-col fixed left-0 top-0 bottom-0 border-r bg-background">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold">Navigation</h2>
-        </div>
         <nav className="flex flex-col gap-4 p-6">
           <Link href="/dashboard" className="text-lg font-semibold">
-            Dashboard
+            Dashboard Home
           </Link>
           <Link href="/profile" className="text-lg font-semibold">
             Profile
           </Link>
-          <Link href="/settings" className="text-lg font-semibold">
-            Settings
+          <Link href="/usersettings" className="text-lg font-semibold">
+            User Settings
           </Link>
+          <Link href="/dashboard/create" className="text-lg font-semibold">
+            Create New
+          </Link>
+
         </nav>
       </div>
 
