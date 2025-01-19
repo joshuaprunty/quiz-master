@@ -45,11 +45,11 @@ export default function Home() {
         </div>
       </Section>
 
-      <Section backgroundColor="#ffffff" className="min-h-[50vh] flex items-center">
-        <div className="py-12 w-full">
+      <Section backgroundColor="#ffffff">
+        <div className="py-24 w-full">
           <h2 className="text-3xl font-bold mb-12">First Section</h2>
           <Carousel 
-            className="w-full mx-auto"
+            className="mx-auto"
             opts={{
               loop: true,
               align: "start",
@@ -91,8 +91,8 @@ export default function Home() {
         </div>
       </Section>
 
-      <Section backgroundColor="#f6f7fb" className="min-h-[50vh] flex items-center">
-        <div className="py-12">
+      <Section backgroundColor="#f6f7fb" className="flex items-center">
+        <div className="py-24">
           <h2 className="text-3xl font-bold mb-12">Second Section</h2>
           <Card className="w-full mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2">
@@ -127,8 +127,8 @@ export default function Home() {
         </div>
       </Section>
 
-      <Section backgroundColor="#ffffff" className="min-h-[50vh] flex items-center">
-        <div className="py-12">
+      <Section backgroundColor="#ffffff" className="flex items-center">
+        <div className="py-24">
           <h2 className="text-3xl font-bold mb-12">Third Section</h2>
           <Card className="w-full mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2">
