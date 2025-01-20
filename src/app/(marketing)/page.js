@@ -124,7 +124,7 @@ export default function Home() {
               </div>
             </div>
           </Card>
-          <Card className="w-full mx-auto my-12">
+          <Card className="w-full mx-auto my-12 overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-2">
               <div className="p-6 flex flex-col justify-center min-h-[30vh]">
                 <div>
