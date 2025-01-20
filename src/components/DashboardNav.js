@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 
 const isAuthenticated = true;
 

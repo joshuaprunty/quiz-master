@@ -63,9 +63,9 @@ export default function Home() {
                 { title: "AI-Powered", description: "Intelligent question generation" },
                 { title: "Customizable", description: "Tailor to your needs" },
               ].map((item, index) => (
-                <CarouselItem key={index} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
-                  <Card className="h-full">
-                    <div className="relative h-48">
+                <CarouselItem key={index} className="basis-1/2 md:basis-1/3 lg:basis-1/4 m-3">
+                  <Card className="h-full transition-transform duration-200 hover:scale-105 px-2">
+                    <div className="relative h-64">
                       <Image
                         src="/studying.jpg"
                         alt="Students studying"
@@ -92,9 +92,9 @@ export default function Home() {
       </Section>
 
       <Section backgroundColor="#f6f7fb" className="flex items-center">
-        <div className="py-24">
+        <div className="py-16">
           <h2 className="text-3xl font-bold mb-12">Second Section</h2>
-          <Card className="w-full mx-auto">
+          <Card className="w-full mx-auto my-12">
             <div className="grid grid-cols-1 md:grid-cols-2">
               <div className="relative h-[300px] md:h-full">
                 <Image
@@ -121,6 +121,36 @@ export default function Home() {
                 <CardFooter className="p-0 mt-4">
                   <Button className="w-full">Learn More</Button>
                 </CardFooter>
+              </div>
+            </div>
+          </Card>
+          <Card className="w-full mx-auto my-12">
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              <div className="p-6 flex flex-col justify-center min-h-[30vh]">
+                <div>
+                  <CardHeader className="p-0 mb-4">
+                    <CardTitle className="text-2xl">Card Title</CardTitle>
+                    <CardDescription>This is a brief description of the card content.</CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent className="p-0">
+                    <p className="text-gray-600">
+                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+                      Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                    </p>
+                  </CardContent>
+                </div>
+                <CardFooter className="p-0 mt-4">
+                  <Button className="w-full">Learn More</Button>
+                </CardFooter>
+              </div>
+              <div className="relative h-[300px] md:h-full">
+                <Image
+                  src="/studying.jpg"
+                  alt="Students studying"
+                  fill
+                  className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
+                />
               </div>
             </div>
           </Card>

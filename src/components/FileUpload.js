@@ -1,8 +1,6 @@
 'use client';
 
 import Uppy from '@uppy/core';
-// For now, if you do not want to install UI components you
-// are not using import from lib directly.
 import Dashboard from '@uppy/react/lib/Dashboard';
 import Tus from '@uppy/tus';
 import { useState } from 'react';
@@ -15,8 +13,6 @@ function createUppy() {
 }
 
 export default function FileUpload() {
-	// Important: use an initializer function to prevent the state from recreating.
 	const [uppy] = useState(createUppy);
-
 	return <Dashboard theme="light" uppy={uppy} />;
 }
