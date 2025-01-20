@@ -6,6 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
+import SaveQuizModal from './SaveQuizModal';
+import saveQuiz from '@/firebase/firestore/saveQuiz';
+import { useAuthContext } from '@/context/AuthContext';
 
 export default function TextInput() {
 	const [studyText, setStudyText] = useState('');
@@ -14,6 +17,9 @@ export default function TextInput() {
 	const [loading, setLoading] = useState(false);
 	const [selectedAnswers, setSelectedAnswers] = useState({});
 	const [checkedAnswers, setCheckedAnswers] = useState({});
+	const { user } = useAuthContext();
+	const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
 
 	const analyzeText = async () => {
 		if (!studyText.trim()) return;
@@ -92,6 +98,36 @@ export default function TextInput() {
 			...checkedAnswers,
 			[questionIndex]: isCorrect
 		});
+	};
+
+	const handleSaveQuiz = async (title) => {
+		if (!user) {
+			console.error('User not authenticated');
+			return;
+		}
+
+		setIsSaving(true);
+		try {
+			const quizData = {
+				title,
+				questions,
+				originalText: studyText
+			};
+
+			const { error } = await saveQuiz(user.uid, quizData);
+			
+			if (error) {
+				console.error('Error saving quiz:', error);
+				return;
+			}
+
+			setIsSaveModalOpen(false);
+			// Optionally add a success notification here
+		} catch (error) {
+			console.error('Error saving quiz:', error);
+		} finally {
+			setIsSaving(false);
+		}
 	};
 
 	return (
@@ -179,6 +215,19 @@ export default function TextInput() {
 					</div>
 				</div>
 			)}
+
+			<Button 
+				onClick={() => setIsSaveModalOpen(true)}
+				className="mt-4"
+			>
+				Save Quiz
+			</Button>
+			<SaveQuizModal
+				isOpen={isSaveModalOpen}
+				onClose={() => setIsSaveModalOpen(false)}
+				onSave={handleSaveQuiz}
+				loading={isSaving}
+			/>
 		</div>
 	);
 }
