@@ -1,8 +1,16 @@
 import Link from "next/link"
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu"
 import { cn } from "@/lib/utils"
+import { FaRegUserCircle } from "react-icons/fa"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-const isAuthenticated = true;
 
 export default function DashboardNavbar() {
   return (
@@ -18,36 +26,27 @@ export default function DashboardNavbar() {
           <NavigationMenu className="ml-auto">
             <NavigationMenuList className="gap-6">
               <NavigationMenuItem>
-                <Link href="/" legacyBehavior passHref>
+                {/* <Link href="/" legacyBehavior passHref>
                   <NavigationMenuLink className={cn(
                     "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                   )}>
                     Home
                   </NavigationMenuLink>
-                </Link>
+                </Link> */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center">
+                    <FaRegUserCircle className="h-10 w-10" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                    <DropdownMenuItem>Billing</DropdownMenuItem>
+                    <DropdownMenuItem>Team</DropdownMenuItem>
+                    <DropdownMenuItem>Subscription</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </NavigationMenuItem>
-
-              {!isAuthenticated ? (
-                <NavigationMenuItem>
-                  <Link href="/login" legacyBehavior passHref>
-                    <NavigationMenuLink className={cn(
-                      "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors bg-blue-600 hover:bg-blue-700 text-white"
-                    )}>
-                      Log In
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              ) : (
-                <NavigationMenuItem>
-                  <Link href="/dashboard" legacyBehavior passHref>
-                    <NavigationMenuLink className={cn(
-                      "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors bg-blue-600 hover:bg-blue-700 text-white"
-                    )}>
-                      Dashboard
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              )}
             </NavigationMenuList>
           </NavigationMenu>
         </div>

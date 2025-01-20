@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function Home() {
   return (
@@ -25,22 +26,14 @@ export default function Home() {
           <div className="py-20 flex flex-col gap-8 items-center text-center w-full">
             <h1 className="text-6xl font-bold text-blue-700">QuizWiz</h1>
             <p className="text-xl">Create quizzes from learning materials with AI.</p>
-            <div className="flex gap-4 items-center flex-col sm:flex-row">
-              <a
+            <Link href="/login" passHref>
+              <Button
                 className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-                href="/login"
                 rel="noopener noreferrer"
               >
                 Sign Up
-              </a>
-              <a
-                className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-                href="/about"
-                rel="noopener noreferrer"
-              >
-                Read More
-              </a>
-            </div>
+              </Button>
+            </Link>
           </div>
         </div>
       </Section>

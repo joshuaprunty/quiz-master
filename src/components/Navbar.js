@@ -2,8 +2,6 @@ import Link from "next/link"
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu"
 import { cn } from "@/lib/utils"
 
-const isAuthenticated = true;
-
 export default function Navbar() {
   return (
     <div>
@@ -18,7 +16,7 @@ export default function Navbar() {
 
             <NavigationMenu className="ml-auto">
               <NavigationMenuList className="gap-6">
-                <NavigationMenuItem>
+                {/* <NavigationMenuItem>
                   <Link href="/" legacyBehavior passHref>
                     <NavigationMenuLink className={cn(
                       "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
@@ -26,29 +24,16 @@ export default function Navbar() {
                       Home
                     </NavigationMenuLink>
                   </Link>
+                </NavigationMenuItem> */}
+                <NavigationMenuItem>
+                  <Link href="/login" legacyBehavior passHref>
+                    <NavigationMenuLink className={cn(
+                      "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors bg-blue-600 hover:bg-blue-700 text-white"
+                    )}>
+                      Log In
+                    </NavigationMenuLink>
+                  </Link>
                 </NavigationMenuItem>
-
-                {!isAuthenticated ? (
-                  <NavigationMenuItem>
-                    <Link href="/login" legacyBehavior passHref>
-                      <NavigationMenuLink className={cn(
-                        "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors bg-blue-600 hover:bg-blue-700 text-white"
-                      )}>
-                        Log In
-                      </NavigationMenuLink>
-                    </Link>
-                  </NavigationMenuItem>
-                ) : (
-                  <NavigationMenuItem>
-                    <Link href="/dashboard" legacyBehavior passHref>
-                      <NavigationMenuLink className={cn(
-                        "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors bg-blue-600 hover:bg-blue-700 text-white"
-                      )}>
-                        Dashboard
-                      </NavigationMenuLink>
-                    </Link>
-                  </NavigationMenuItem>
-                )}
               </NavigationMenuList>
             </NavigationMenu>
           </div>
