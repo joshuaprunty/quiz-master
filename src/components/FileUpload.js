@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
+import { Toaster } from "@/components/ui/toaster"
 import SaveQuizModal from './SaveQuizModal';
 import saveQuiz from '@/firebase/firestore/saveQuiz';
 import { useAuthContext } from '@/context/AuthContext';
@@ -20,9 +22,17 @@ export default function TextInput() {
 	const { user } = useAuthContext();
 	const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
+	const { toast } = useToast();
 
 	const analyzeText = async () => {
-		if (!studyText.trim()) return;
+		if (!studyText.trim()) {
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: "Please enter some text before analyzing.",
+			});
+			return;
+		}
 		
 		setLoading(true);
 		try {
@@ -62,7 +72,14 @@ export default function TextInput() {
 	};
 
 	const generateQuestions = async () => {
-		if (!studyText.trim()) return;
+		if (!studyText.trim()) {
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: "Please enter some text before generating questions.",
+			});
+			return;
+		}
 		
 		setLoading(true);
 		try {
@@ -145,7 +162,7 @@ export default function TextInput() {
 					className="flex-1"
 					disabled={loading}
 				>
-					{loading ? 'Analyzing...' : 'Analyze Text'}
+					{loading ? 'Analyzing...' : 'Analyze Topics'}
 				</Button>
 
 				<Button 
@@ -213,21 +230,22 @@ export default function TextInput() {
 							</Card>
 						))}
 					</div>
+					<Button 
+						onClick={() => setIsSaveModalOpen(true)}
+						className="mt-4"
+					>
+						Save Quiz
+					</Button>
 				</div>
 			)}
 
-			<Button 
-				onClick={() => setIsSaveModalOpen(true)}
-				className="mt-4"
-			>
-				Save Quiz
-			</Button>
 			<SaveQuizModal
 				isOpen={isSaveModalOpen}
 				onClose={() => setIsSaveModalOpen(false)}
 				onSave={handleSaveQuiz}
 				loading={isSaving}
 			/>
+			<Toaster />
 		</div>
 	);
 }

@@ -3,6 +3,10 @@ import { useAuthContext } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import getUserQuizzes from "@/firebase/firestore/getUserQuizzes";
+import deleteQuiz from "@/firebase/firestore/deleteQuiz";
+import DeleteQuizModal from "@/components/DeleteQuizModal";
+import { TbSettings } from "react-icons/tb"
+
 
 import {
   Card,
@@ -16,12 +20,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { slugify } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Dashboard() {
   const { user } = useAuthContext();
   const router = useRouter();
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (user == null) {
@@ -41,6 +54,34 @@ export default function Dashboard() {
 
     fetchQuizzes();
   }, [user, router]);
+
+  const handleDeleteClick = (quiz) => {
+    setSelectedQuiz(quiz);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedQuiz) return;
+
+    setIsDeleting(true);
+    try {
+      const { error } = await deleteQuiz(user.uid, selectedQuiz.id);
+      if (error) {
+        console.error('Error deleting quiz:', error);
+        return;
+      }
+      
+      // Refresh quizzes list
+      const { result } = await getUserQuizzes(user.uid);
+      setQuizzes(result);
+    } catch (error) {
+      console.error('Error deleting quiz:', error);
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      setSelectedQuiz(null);
+    }
+  };
 
   if (loading) {
     return <div className="p-8">Loading...</div>;
@@ -70,10 +111,25 @@ export default function Dashboard() {
                   <CardHeader className="p-0 mb-4">
                     <CardTitle className="text-2xl">{quiz.title}</CardTitle>
                   </CardHeader>
-                  <CardFooter className="p-0 mt-4">
-                    <Link href={`/dashboard/${slugify(quiz.title)}`}>
+                  <CardFooter className="p-0 mt-4 flex gap-2">
+                    <Link href={`/dashboard/${slugify(quiz.title)}`} className="flex-1">
                       <Button className="w-full">View</Button>
                     </Link>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <TbSettings className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => handleDeleteClick(quiz)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </CardFooter>
                 </div>
               </div>
@@ -81,6 +137,17 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+      
+      <DeleteQuizModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setSelectedQuiz(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        loading={isDeleting}
+        quizTitle={selectedQuiz?.title}
+      />
     </div>
   );
 }
