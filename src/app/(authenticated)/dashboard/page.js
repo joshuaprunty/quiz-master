@@ -1,3 +1,8 @@
+'use client'
+import { useAuthContext } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 import {
   Card,
   CardContent,
@@ -13,7 +18,19 @@ import { Separator } from "@/components/ui/separator";
 import { slugify } from "@/lib/utils";
 
 
+
 export default function Dashboard() {
+  const { user } = useAuthContext(); // Use 'as' to assert the type as { user: any }
+  const router = useRouter();
+
+  useEffect( () => {
+    // Redirect to the home page if the user is not logged in
+    if ( user == null ) {
+      router.push( "/" );
+    }
+    // }, [ user ] );
+  }, [ user, router ] ); // Include 'router' in the dependency array to resolve eslint warning
+
   const cardData = [
     {
       title: "Quiz A",
