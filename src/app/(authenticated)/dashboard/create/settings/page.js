@@ -1,14 +1,4 @@
-import FileUpload from "@/components/FileUpload";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import Image from "next/image";
 import Link from "next/link";
 import {
   Select,
@@ -17,7 +7,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
 
 
 export default function Create() {

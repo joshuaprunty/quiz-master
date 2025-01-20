@@ -12,7 +12,6 @@ export default function AuthenticatedLayout({ children }) {
   return (
     <div>
       <DashboardNavbar />
-
       {/* Mobile Sheet/Drawer */}
       <Sheet>
         <SheetTrigger asChild className="fixed left-4 top-4 lg:hidden z-40">
@@ -34,7 +33,6 @@ export default function AuthenticatedLayout({ children }) {
           </nav>
         </SheetContent>
       </Sheet>
-
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex h-[calc(100vh-64px)] w-64 flex-col fixed left-0 top-16 bottom-0 border-r bg-background">
         <nav className="flex flex-col gap-4 p-6">
@@ -60,7 +58,6 @@ export default function AuthenticatedLayout({ children }) {
           </Link>
         </nav>
       </div>
-
       {/* Main Content */}
       <div className="lg:pl-64 pt-16">
         {children}
