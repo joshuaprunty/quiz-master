@@ -3,11 +3,17 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 
 export default function TextInput() {
 	const [studyText, setStudyText] = useState('');
 	const [topics, setTopics] = useState(null);
+	const [questions, setQuestions] = useState(null);
 	const [loading, setLoading] = useState(false);
+	const [selectedAnswers, setSelectedAnswers] = useState({});
+	const [checkedAnswers, setCheckedAnswers] = useState({});
 
 	const analyzeText = async () => {
 		if (!studyText.trim()) return;
@@ -49,8 +55,47 @@ export default function TextInput() {
 		}
 	};
 
+	const generateQuestions = async () => {
+		if (!studyText.trim()) return;
+		
+		setLoading(true);
+		try {
+			const response = await fetch('/api/questiongen', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ text: studyText }),
+			});
+
+			if (!response.ok) throw new Error('Question generation failed');
+			
+			const data = await response.json();
+			if (data.error) {
+				throw new Error(data.error);
+			}
+
+			setQuestions(data);
+			setSelectedAnswers({});
+			setCheckedAnswers({});
+		} catch (error) {
+			console.error('Error generating questions:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const checkAnswer = (questionIndex) => {
+		const question = questions[questionIndex];
+		const isCorrect = selectedAnswers[questionIndex] === question.correct_answer;
+		setCheckedAnswers({
+			...checkedAnswers,
+			[questionIndex]: isCorrect
+		});
+	};
+
 	return (
-		<div className="space-y-4 max-w-4xl mx-auto">
+		<div className="space-y-4 my-12 max-w-4xl">
 			<Textarea
 				placeholder="Paste your study materials here..."
 				className="min-h-[300px]"
@@ -58,29 +103,23 @@ export default function TextInput() {
 				onChange={(e) => setStudyText(e.target.value)}
 			/>
 			
-			<Button 
-				onClick={analyzeText} 
-				className="w-full"
-				disabled={loading}
-			>
-				{loading ? 'Analyzing...' : 'Analyze Text'}
-			</Button>
+			<div className="flex gap-4">
+				<Button 
+					onClick={analyzeText} 
+					className="flex-1"
+					disabled={loading}
+				>
+					{loading ? 'Analyzing...' : 'Analyze Text'}
+				</Button>
 
-			{/* <Button onClick={() => console.log(topics)}>log topics</Button> */}
-
-			{/* {topics && (
-				<div className="mt-8 space-y-4">
-					<h2 className="text-xl font-bold">Main Topics Identified:</h2>
-					<div className="grid gap-4">
-						{topics.map((topic, index) => (
-							<div key={index} className="border rounded-lg p-4">
-								<h3 className="font-semibold">{topic.topic}</h3>
-								<p className="text-gray-600 mt-2">{topic.description}</p>
-							</div>
-						))}
-					</div>
-				</div>
-			)} */}
+				<Button 
+					onClick={generateQuestions} 
+					className="flex-1"
+					disabled={loading}
+				>
+					{loading ? 'Generating...' : 'Generate Questions'}
+				</Button>
+			</div>
 
 			{topics && (
 				<div className="mt-8 space-y-4">
@@ -94,10 +133,52 @@ export default function TextInput() {
 						))}
 					</div>
 				</div>
-    	)}
+			)}
 
-
-
+			{questions && (
+				<div className="mt-8 space-y-4">
+					<h2 className="text-xl font-bold">Practice Questions:</h2>
+					<div className="grid gap-6">
+						{questions.map((question, index) => (
+							<Card key={index} className="w-full">
+								<CardHeader>
+									<h3 className="font-semibold text-lg">Question {index + 1}</h3>
+									<p>{question.question}</p>
+								</CardHeader>
+								<CardContent>
+									<RadioGroup
+										value={selectedAnswers[index]}
+										onValueChange={(value) => setSelectedAnswers({
+											...selectedAnswers,
+											[index]: value
+										})}
+									>
+										{question.answers.map((answer, ansIndex) => (
+											<div key={ansIndex} className="flex items-center space-x-2">
+												<RadioGroupItem value={answer} id={`q${index}-a${ansIndex}`} />
+												<Label htmlFor={`q${index}-a${ansIndex}`}>{answer}</Label>
+											</div>
+										))}
+									</RadioGroup>
+								</CardContent>
+								<CardFooter className="flex justify-between items-center">
+									<Button 
+										onClick={() => checkAnswer(index)}
+										disabled={!selectedAnswers[index]}
+									>
+										Check Answer
+									</Button>
+									{checkedAnswers[index] !== undefined && (
+										<p className={checkedAnswers[index] ? "text-green-600" : "text-red-600"}>
+											{checkedAnswers[index] ? "Correct!" : "Incorrect"}
+										</p>
+									)}
+								</CardFooter>
+							</Card>
+						))}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
