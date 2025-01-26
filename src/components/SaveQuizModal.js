@@ -1,11 +1,18 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DialogDescription } from "@radix-ui/react-dialog";
 
 export default function SaveQuizModal({ isOpen, onClose, onSave, loading }) {
-  const [quizTitle, setQuizTitle] = useState('');
+  const [quizTitle, setQuizTitle] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -18,6 +25,9 @@ export default function SaveQuizModal({ isOpen, onClose, onSave, loading }) {
         <DialogHeader>
           <DialogTitle>Save Quiz</DialogTitle>
         </DialogHeader>
+        <DialogDescription>
+          Enter a title for your quiz to save it.
+        </DialogDescription>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -32,11 +42,16 @@ export default function SaveQuizModal({ isOpen, onClose, onSave, loading }) {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={loading}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={!quizTitle.trim() || loading}>
-              {loading ? 'Saving...' : 'Save Quiz'}
+              {loading ? "Saving..." : "Save Quiz"}
             </Button>
           </DialogFooter>
         </form>

@@ -15,6 +15,7 @@ import { useAuthContext } from "@/context/AuthContext";
 import saveQuiz from "@/firebase/firestore/saveQuiz";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import SaveQuizModal from "./SaveQuizModal";
 
 export default function TextInput() {
@@ -26,11 +27,13 @@ export default function TextInput() {
   const [checkedAnswers, setCheckedAnswers] = useState({});
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingCorrectAnswer, setEditingCorrectAnswer] = useState(null);
+  const [saveDisabled, setSaveDisabled] = useState(false);
 
   const { user } = useAuthContext();
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleEditClick = (index) => {
     setEditingIndex(index);
@@ -48,7 +51,7 @@ export default function TextInput() {
               const updatedAnswers = [...q.answers];
               updatedAnswers[answerIndex] = value;
 
-              if (q.answers[answerIndex] === editingCorrectAnswer){
+              if (q.answers[answerIndex] === editingCorrectAnswer) {
                 setEditingCorrectAnswer(value);
               }
 
@@ -67,7 +70,7 @@ export default function TextInput() {
   };
 
   const handleSaveEdit = () => {
-    if (!editingCorrectAnswer) {
+    if (!questions[editingIndex].answers.includes(editingCorrectAnswer)) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -76,7 +79,6 @@ export default function TextInput() {
       return;
     }
 
-    // Check if all answers are not empty
     const question = questions[editingIndex];
     if (question.answers.some((answer) => !answer.trim())) {
       toast({
@@ -98,6 +100,7 @@ export default function TextInput() {
 
     setEditingIndex(null);
     setEditingCorrectAnswer(null);
+    setCheckedAnswers({});
   };
 
   const analyzeText = async () => {
@@ -201,7 +204,7 @@ export default function TextInput() {
       console.error("User not authenticated");
       return;
     }
-  
+
     // Validate that all questions have non-empty answers
     for (const question of questions) {
       if (question.answers.some((answer) => !answer.trim())) {
@@ -213,7 +216,7 @@ export default function TextInput() {
         return;
       }
     }
-  
+
     setIsSaving(true);
     try {
       const quizData = {
@@ -221,16 +224,27 @@ export default function TextInput() {
         questions,
         originalText: studyText,
       };
-  
+
       const { error } = await saveQuiz(user.uid, quizData);
-  
+
       if (error) {
         console.error("Error saving quiz:", error);
         return;
       }
-  
+
       setIsSaveModalOpen(false);
-      // Optionally add a success notification here
+      setSaveDisabled(true);
+
+      toast({
+        variant: "success",
+        title: "Quiz Saved",
+        description:
+          "Your quiz has been successfully saved. Navigating to dashboard...",
+      });
+
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 3000);
     } catch (error) {
       console.error("Error saving quiz:", error);
     } finally {
@@ -248,6 +262,8 @@ export default function TextInput() {
         setEditingIndex(null);
         setEditingCorrectAnswer(null);
       }
+
+      setCheckedAnswers({});
     }
   };
 
@@ -410,7 +426,11 @@ export default function TextInput() {
               </Card>
             ))}
           </div>
-          <Button onClick={() => setIsSaveModalOpen(true)} className="mt-4">
+          <Button
+            onClick={() => setIsSaveModalOpen(true)}
+            className="mt-4"
+            disabled={saveDisabled}
+          >
             Save Quiz
           </Button>
         </div>

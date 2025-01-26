@@ -13,6 +13,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
@@ -72,6 +73,11 @@ export default function QuizPage({ params }) {
               const answerIndex = parseInt(match[1], 10);
               const updatedAnswers = [...question.answers];
               updatedAnswers[answerIndex] = value;
+
+              if (question.answers[answerIndex] === editingCorrectAnswer) {
+                setEditingCorrectAnswer(value);
+              }
+
               return { ...question, answers: updatedAnswers };
             }
           }
@@ -98,11 +104,21 @@ export default function QuizPage({ params }) {
   };
 
   const handleSaveEdit = async () => {
-    if (!editingCorrectAnswer) {
+    if (!questions[editingIndex].answers.includes(editingCorrectAnswer)) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Please select a correct answer before saving.",
+      });
+      return;
+    }
+
+    const question = questions[editingIndex];
+    if (question.answers.some((answer) => !answer.trim())) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "All answer choices must be filled out before saving.",
       });
       return;
     }
@@ -114,6 +130,7 @@ export default function QuizPage({ params }) {
     setQuestions(updatedQuestions);
     setEditingIndex(null);
     setEditingCorrectAnswer(null);
+    setCheckedAnswers({});
 
     await saveQuiz(updatedQuestions);
   };
@@ -125,6 +142,8 @@ export default function QuizPage({ params }) {
       setQuestions(updatedQuestions);
       setEditingIndex(null);
       setEditingCorrectAnswer(null);
+
+      setCheckedAnswers({});
 
       await saveQuiz(updatedQuestions);
     }
@@ -139,6 +158,18 @@ export default function QuizPage({ params }) {
       if (error) {
         throw new Error(error);
       }
+
+      for (const question of questions) {
+        if (question.answers.some((answer) => !answer.trim())) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "All answer choices in the quiz must be filled out.",
+          });
+          return;
+        }
+      }
+
       toast({
         variant: "success",
         title: "Success",
@@ -170,7 +201,7 @@ export default function QuizPage({ params }) {
     setSubmitted(true);
   };
 
-  const allQuestionsAnswered = quiz?.questions.every(
+  const allQuestionsAnswered = questions.every(
     (_, index) => selectedAnswers[index]
   );
 
@@ -340,6 +371,7 @@ export default function QuizPage({ params }) {
           </Button>
         </div>
       </div>
+      <Toaster />
     </div>
   );
 }
