@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ import { MdFolderOpen } from "react-icons/md"
 import { usePathname } from "next/navigation"
 
 const navigationItems = [
-  { href: '/dashboard', label: 'Home', icon: GoHome },
+  { href: '/dashboard', label: 'Dashboard', icon: GoHome },
   { href: '/profile', label: 'Profile', icon: FaRegUserCircle },
   { href: '/usersettings', label: 'Settings', icon: TbSettings },
   { href: '/dashboard/create', label: 'Create New', icon: IoAddCircleOutline },
