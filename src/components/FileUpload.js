@@ -1,21 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import {
   Card,
-  CardHeader,
   CardContent,
   CardFooter,
+  CardHeader,
 } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { Toaster } from "@/components/ui/toaster";
-import SaveQuizModal from "./SaveQuizModal";
-import saveQuiz from "@/firebase/firestore/saveQuiz";
 import { useAuthContext } from "@/context/AuthContext";
+import saveQuiz from "@/firebase/firestore/saveQuiz";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import SaveQuizModal from "./SaveQuizModal";
 
 export default function TextInput() {
   const [studyText, setStudyText] = useState("");
@@ -47,6 +47,11 @@ export default function TextInput() {
               const answerIndex = parseInt(match[1], 10);
               const updatedAnswers = [...q.answers];
               updatedAnswers[answerIndex] = value;
+
+              if (q.answers[answerIndex] === editingCorrectAnswer){
+                setEditingCorrectAnswer(value);
+              }
+
               return { ...q, answers: updatedAnswers };
             }
           }
@@ -67,6 +72,17 @@ export default function TextInput() {
         variant: "destructive",
         title: "Error",
         description: "Please select a correct answer before saving.",
+      });
+      return;
+    }
+
+    // Check if all answers are not empty
+    const question = questions[editingIndex];
+    if (question.answers.some((answer) => !answer.trim())) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "All answer choices must be filled out before saving.",
       });
       return;
     }
@@ -185,7 +201,19 @@ export default function TextInput() {
       console.error("User not authenticated");
       return;
     }
-
+  
+    // Validate that all questions have non-empty answers
+    for (const question of questions) {
+      if (question.answers.some((answer) => !answer.trim())) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "All answer choices in the quiz must be filled out.",
+        });
+        return;
+      }
+    }
+  
     setIsSaving(true);
     try {
       const quizData = {
@@ -193,14 +221,14 @@ export default function TextInput() {
         questions,
         originalText: studyText,
       };
-
+  
       const { error } = await saveQuiz(user.uid, quizData);
-
+  
       if (error) {
         console.error("Error saving quiz:", error);
         return;
       }
-
+  
       setIsSaveModalOpen(false);
       // Optionally add a success notification here
     } catch (error) {
