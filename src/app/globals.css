@@ -60,6 +60,11 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+  .title-break {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
 }
 
 @layer base {

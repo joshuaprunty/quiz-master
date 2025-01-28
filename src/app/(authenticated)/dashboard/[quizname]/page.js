@@ -1,21 +1,21 @@
 "use client";
-import { use, useEffect, useState } from "react";
-import { useAuthContext } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
-import getQuizByTitle from "@/firebase/firestore/getQuizByTitle";
-import updateQuiz from "@/firebase/firestore/updateQuiz";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import {
   Card,
-  CardHeader,
   CardContent,
   CardFooter,
+  CardHeader,
 } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Toaster } from "@/components/ui/toaster";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Toaster } from "@/components/ui/toaster";
+import { useAuthContext } from "@/context/AuthContext";
+import getQuizByTitle from "@/firebase/firestore/getQuizByTitle";
+import updateQuiz from "@/firebase/firestore/updateQuiz";
+import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { use, useEffect, useState } from "react";
 
 export default function QuizPage({ params }) {
   const { quizname } = use(params);
@@ -216,7 +216,9 @@ export default function QuizPage({ params }) {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">{quiz.title}</h1>
+        <h1 className="text-3xl font-bold title-break">
+          {quiz.title}
+        </h1>
         <Link href="/dashboard">
           <Button variant="outline">Back to Dashboard</Button>
         </Link>
