@@ -1,31 +1,30 @@
 'use client'
+import DeleteQuizModal from "@/components/DeleteQuizModal";
 import { useAuthContext } from "@/context/AuthContext";
+import deleteQuiz from "@/firebase/firestore/deleteQuiz";
+import getUserQuizzes from "@/firebase/firestore/getUserQuizzes";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import getUserQuizzes from "@/firebase/firestore/getUserQuizzes";
-import deleteQuiz from "@/firebase/firestore/deleteQuiz";
-import DeleteQuizModal from "@/components/DeleteQuizModal";
-import { TbSettings } from "react-icons/tb"
+import { TbSettings } from "react-icons/tb";
 
 
+import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardFooter,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import Image from "next/image";
-import Link from "next/link";
-import { Separator } from "@/components/ui/separator";
-import { slugify } from "@/lib/utils";
+  CardTitle
+} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { slugify } from "@/lib/utils";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function Dashboard() {
   const { user } = useAuthContext();
@@ -91,11 +90,11 @@ export default function Dashboard() {
     <div className="p-8">
       <h1 className="text-3xl font-bold my-2">Dashboard</h1>
       <p className="my-2">Welcome to your dashboard!</p>
-      <Button className="w-full max-w-7xl my-2">
-        <Link href="/dashboard/create">
+      <Link href="/dashboard/create">
+        <Button className="w-full max-w-7xl my-2">
           + Create Quiz
-        </Link>
-      </Button>
+        </Button>
+      </Link>
       <Separator className="my-6 max-w-7xl" />
       {quizzes.length === 0 ? (
         <p className="text-center text-gray-500">No quizzes created yet. Create your first quiz!</p>
