@@ -113,7 +113,8 @@ export default function Dashboard() {
                 </div>
                 <div className="p-6 flex flex-col justify-center">
                   <CardHeader className="p-0 mb-4">
-                    <CardTitle className="text-2xl break-words hyphens-auto overflow-wrap-anywhere">{quiz.title}</CardTitle>
+                    {/* <CardTitle className="text-2xl break-words hyphens-auto overflow-wrap-anywhere">{quiz.title}</CardTitle> */}
+                    <CardTitle className="text-2xl whitespace-nowrap overflow-hidden text-ellipsis">{quiz.title}</CardTitle>
                   </CardHeader>
                   <CardFooter className="p-0 mt-4 flex gap-2">
                     <Link href={`/dashboard/${slugify(quiz.title)}`} className="flex-1">
