@@ -26,6 +26,7 @@ export default function QuizPage({ params }) {
   const [questions, setQuestions] = useState([]);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [checkedAnswers, setCheckedAnswers] = useState({});
+  const [explanationVisible, setExplanationVisible] = useState({});
 
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingCorrectAnswer, setEditingCorrectAnswer] = useState(null);
@@ -50,6 +51,7 @@ export default function QuizPage({ params }) {
         router.push("/dashboard");
         return;
       }
+      console.log("Fetched Quiz Data:", result);
       setQuiz(result);
       setQuestions(result.questions);
       setLoading(false);
@@ -323,13 +325,13 @@ export default function QuizPage({ params }) {
                   ))}
                 </RadioGroup>
               </CardContent>
-              <CardFooter className="flex justify-end items-center">
+              <CardFooter className="flex flex-col gap-2">
                 {editingIndex === index ? (
                   <Button onClick={handleSaveEdit} variant="save">
                     Save
                   </Button>
                 ) : (
-                  <div className="flex flex-row flex-1 justify-between">
+                  <div className="flex flex-row justify-between items-center w-full">
                     <div className="flex flex-row items-center gap-4">
                       <Button
                         onClick={() => checkAnswer(index)}
@@ -356,6 +358,33 @@ export default function QuizPage({ params }) {
                     >
                       Edit
                     </Button>
+                  </div>
+                )}
+                {/* Explanation Button */}
+                <Button
+                  onClick={() => {
+                    if (!selectedAnswers[index]) {
+                      toast({
+                        variant: "destructive",
+                        title: "Error",
+                        description: "Please answer the question first to view the explanation.",
+                      });
+                      return;
+                    }
+                    setExplanationVisible((prev) => ({
+                      ...prev,
+                      [index]: !prev[index],
+                    }));
+                  }}
+                  className="mt-2"
+                >
+                  {explanationVisible[index] ? "Hide Explanation" : "View Explanation"}
+                </Button>
+
+                {/* Explanation Box */}
+                {explanationVisible[index] && (
+                  <div className="mt-4 p-3 bg-gray-100 rounded-lg">
+                    <p>{question.explanation || "No explanation available."}</p>
                   </div>
                 )}
               </CardFooter>

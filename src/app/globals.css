@@ -65,6 +65,13 @@ body {
     overflow-wrap: anywhere;
     white-space: normal;
   }
+  .explanation-box {
+    background-color: #f1f5f9;
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 8px;
+    color: #334155;
+  }
 }
 
 @layer base {

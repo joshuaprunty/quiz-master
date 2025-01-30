@@ -14,8 +14,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { useAuthContext } from "@/context/AuthContext";
 import saveQuiz from "@/firebase/firestore/saveQuiz";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import SaveQuizModal from "./SaveQuizModal";
 
 export default function TextInput() {
@@ -28,6 +28,7 @@ export default function TextInput() {
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingCorrectAnswer, setEditingCorrectAnswer] = useState(null);
   const [saveDisabled, setSaveDisabled] = useState(false);
+  const [explanationVisible, setExplanationVisible] = useState({});
 
   const { user } = useAuthContext();
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -388,13 +389,13 @@ export default function TextInput() {
                     ))}
                   </RadioGroup>
                 </CardContent>
-                <CardFooter className="flex justify-end items-center">
+                <CardFooter className="flex flex-col gap-2">
                   {editingIndex === index ? (
                     <Button onClick={handleSaveEdit} variant="save">
                       Save
                     </Button>
                   ) : (
-                    <div className="flex flex-row flex-1 justify-between">
+                    <div className="flex flex-row justify-between items-center w-full">
                       <div className="flex flex-row items-center gap-4">
                         <Button
                           onClick={() => checkAnswer(index)}
@@ -422,6 +423,35 @@ export default function TextInput() {
                       </Button>
                     </div>
                   )}
+                  {/* Row with the Explanation Button */}
+                  <div className="mt-2">
+                    <Button
+                      onClick={() => {
+                        if (!selectedAnswers[index]) {
+                          toast({
+                            variant: "destructive",
+                            title: "Error",
+                            description:
+                              "Please answer the question first to view the explanation.",
+                          });
+                          return;
+                        }
+                        setExplanationVisible((prev) => ({
+                          ...prev,
+                          [index]: !prev[index],
+                        }));
+                      }}
+                    >
+                      {explanationVisible[index] ? "Hide Explanation" : "View Explanation"}
+                    </Button>
+
+                    {/* Explanation Box */}
+                    {explanationVisible[index] && (
+                      <div className="mt-2 p-3 bg-gray-100 rounded-lg">
+                        <p>{question.explanation}</p>
+                      </div>
+                    )}
+                  </div>
                 </CardFooter>
               </Card>
             ))}
