@@ -1,6 +1,6 @@
 import OpenAI from "openai";
-import { z } from "zod";
 import { zodResponseFormat } from "openai/helpers/zod";
+import { z } from "zod";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -10,6 +10,7 @@ const Question = z.object({
   question: z.string(),
   answers: z.array(z.string()),
   correct_answer: z.string(),
+  explanation: z.string(),  // New field
 });
 
 // Create a new schema for an array of questions
@@ -27,10 +28,11 @@ export async function POST(request) {
     const response = await openai.beta.chat.completions.parse({
       model: "gpt-4o-2024-08-06",
       messages: [
-        { role: "system", content: "You are a helpful teaching assistant. Analyze the provided study materials and generate 10 multiple choice questions with 4 options and 1 correct answer." },
+        { role: "system", 
+          content: 'You are a helpful teaching assistant. Analyze the provided study materials and generate 10 multiple choice questions with 4 options, 1 correct answer, and a detailed explanation for the correct answer. The explanation must always begin with "The correct answer is <correct_answer>. It is correct because ..."" followed by a detailed explanation.', },
         { role: "user", content: text },
       ],
-      response_format: zodResponseFormat(ResponseSchema, "questions"),  // Remove the "questions" parameter
+      response_format: zodResponseFormat(ResponseSchema, "questions"),
     });
     
     const questions = response.choices[0].message.parsed.questions;  // Access the questions array from the parsed object
