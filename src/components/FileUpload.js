@@ -153,7 +153,7 @@ export default function TextInput() {
     }
   };
 
-  const generateQuestions = async () => {
+  const generateQuestions = async (regenerateIndex = null) => {
     if (!studyText.trim()) {
       toast({
         variant: "destructive",
@@ -165,12 +165,29 @@ export default function TextInput() {
 
     setLoading(true);
     try {
+      // ✅ Ensure `questions` is JSON-safe
+      const sanitizedQuestions = questions
+        ? questions.map(
+            ({ question, answers, correct_answer, explanation }) => ({
+              question,
+              answers,
+              correct_answer,
+              explanation,
+            })
+          )
+        : [];
+
       const response = await fetch("/api/questiongen", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: studyText }),
+        body: JSON.stringify({
+          text: studyText,
+          regenerateIndex:
+            regenerateIndex !== null ? regenerateIndex : undefined, // ✅ Ensure correct value
+          existingQuestions: sanitizedQuestions, // ✅ Only include necessary data
+        }),
       });
 
       if (!response.ok) throw new Error("Question generation failed");
@@ -180,9 +197,19 @@ export default function TextInput() {
         throw new Error(data.error);
       }
 
-      setQuestions(data);
-      setSelectedAnswers({});
-      setCheckedAnswers({});
+      if (regenerateIndex !== null) {
+        // ✅ Ensure correct question replacement
+        setQuestions((prevQuestions) =>
+          prevQuestions.map((q, i) =>
+            i === regenerateIndex ? data.question : q
+          )
+        );
+      } else {
+        // ✅ Replace the entire quiz
+        setQuestions(data.questions || []);
+        setSelectedAnswers({});
+        setCheckedAnswers({});
+      }
     } catch (error) {
       console.error("Error generating questions:", error);
     } finally {
@@ -288,7 +315,7 @@ export default function TextInput() {
         </Button>
 
         <Button
-          onClick={generateQuestions}
+          onClick={() => generateQuestions(null)}
           className="flex-1"
           disabled={loading}
         >
@@ -321,6 +348,12 @@ export default function TextInput() {
                     <h3 className="font-semibold text-lg">
                       Question {index + 1}
                     </h3>
+                    <Button
+                      onClick={() => generateQuestions(index)}
+                      variant="outline"
+                    >
+                      Regenerate Question
+                    </Button>
                     <Button
                       onClick={() => handleDeleteQuestion(index)}
                       variant="destructive"
@@ -463,6 +496,9 @@ export default function TextInput() {
               </Card>
             ))}
           </div>
+          <Button onClick={() => generateQuestions(null)} variant="outline">
+            Regenerate Entire Quiz
+          </Button>
           <Button
             onClick={() => setIsSaveModalOpen(true)}
             className="mt-4"

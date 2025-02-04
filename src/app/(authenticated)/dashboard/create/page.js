@@ -8,11 +8,6 @@ export default function Create() {
       <h1 className="text-3xl font-bold">Create Quiz</h1>
       <p className="mt-4">Initialize quiz generation</p>
       <FileUpload />
-      {/* <Button className="w-full max-w-4xl my-12">
-        <Link href="/dashboard/create/settings">
-          Next
-        </Link>
-      </Button> */}
     </div>
   );
 }
