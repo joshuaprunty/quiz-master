@@ -17,6 +17,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import SaveQuizModal from "./SaveQuizModal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function TextInput() {
   const [studyText, setStudyText] = useState("");
@@ -29,6 +36,7 @@ export default function TextInput() {
   const [editingCorrectAnswer, setEditingCorrectAnswer] = useState(null);
   const [saveDisabled, setSaveDisabled] = useState(false);
   const [explanationVisible, setExplanationVisible] = useState({});
+  const [questionType, setQuestionType] = useState("multiple-choice");
 
   const { user } = useAuthContext();
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -162,7 +170,7 @@ export default function TextInput() {
       });
       return;
     }
-
+  
     setLoading(true);
     try {
       const response = await fetch("/api/questiongen", {
@@ -170,17 +178,32 @@ export default function TextInput() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: studyText }),
+        body: JSON.stringify({ 
+          text: studyText,
+          type: questionType 
+        }),
       });
-
+  
       if (!response.ok) throw new Error("Question generation failed");
-
+  
       const data = await response.json();
       if (data.error) {
         throw new Error(data.error);
       }
 
-      setQuestions(data);
+      // Transform true/false questions to include answers array
+      const transformedQuestions = data.map(question => {
+        if (questionType === "true-false" && !question.answers) {
+          return {
+            ...question,
+            answers: ["True", "False"],
+            correct_answer: question.correct_answer ? "True" : "False"
+          };
+        }
+        return question;
+      });
+  
+      setQuestions(transformedQuestions);
       setSelectedAnswers({});
       setCheckedAnswers({});
     } catch (error) {
@@ -287,13 +310,30 @@ export default function TextInput() {
           {loading ? "Analyzing..." : "Analyze Topics"}
         </Button>
 
-        <Button
-          onClick={generateQuestions}
-          className="flex-1"
-          disabled={loading}
-        >
-          {loading ? "Generating..." : "Generate Questions"}
-        </Button>
+        <div className="flex gap-2">
+          <Select 
+            defaultValue="multiple-choice"
+            onValueChange={(value) => setQuestionType(value)}
+            disabled={loading}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Question Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
+              <SelectItem value="true-false">True/False</SelectItem>
+              <SelectItem value="mixed">Mixed (5 Each)</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button
+            onClick={generateQuestions}
+            className="flex-1"
+            disabled={loading}
+          >
+            {loading ? "Generating..." : "Generate Questions"}
+          </Button>
+        </div>
       </div>
 
       {topics && (
