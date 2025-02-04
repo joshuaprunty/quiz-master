@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import DeleteQuizModal from "@/components/DeleteQuizModal";
 import { useAuthContext } from "@/context/AuthContext";
 import deleteQuiz from "@/firebase/firestore/deleteQuiz";
@@ -7,14 +7,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TbSettings } from "react-icons/tb";
 
-
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +38,7 @@ export default function Dashboard() {
     const fetchQuizzes = async () => {
       const { result, error } = await getUserQuizzes(user.uid);
       if (error) {
-        console.error('Error fetching quizzes:', error);
+        console.error("Error fetching quizzes:", error);
         return;
       }
       setQuizzes(result);
@@ -66,20 +60,25 @@ export default function Dashboard() {
     try {
       const { error } = await deleteQuiz(user.uid, selectedQuiz.id);
       if (error) {
-        console.error('Error deleting quiz:', error);
+        console.error("Error deleting quiz:", error);
         return;
       }
-      
+
       // Refresh quizzes list
       const { result } = await getUserQuizzes(user.uid);
       setQuizzes(result);
     } catch (error) {
-      console.error('Error deleting quiz:', error);
+      console.error("Error deleting quiz:", error);
     } finally {
       setIsDeleting(false);
       setDeleteModalOpen(false);
       setSelectedQuiz(null);
     }
+  };
+
+  const formatTitle = (title) => {
+    const tit = title.replace(/ /g, "-");
+    return tit;
   };
 
   if (loading) {
@@ -91,13 +90,13 @@ export default function Dashboard() {
       <h1 className="text-3xl font-bold my-2">Dashboard</h1>
       <p className="my-2">Welcome to your dashboard!</p>
       <Link href="/dashboard/create">
-        <Button className="w-full max-w-7xl my-2">
-          + Create Quiz
-        </Button>
+        <Button className="w-full max-w-7xl my-2">+ Create Quiz</Button>
       </Link>
       <Separator className="my-6 max-w-7xl" />
       {quizzes.length === 0 ? (
-        <p className="text-center text-gray-500">No quizzes created yet. Create your first quiz!</p>
+        <p className="text-center text-gray-500">
+          No quizzes created yet. Create your first quiz!
+        </p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl">
           {quizzes.map((quiz) => (
@@ -114,10 +113,15 @@ export default function Dashboard() {
                 <div className="p-6 flex flex-col justify-center">
                   <CardHeader className="p-0 mb-4">
                     {/* <CardTitle className="text-2xl break-words hyphens-auto overflow-wrap-anywhere">{quiz.title}</CardTitle> */}
-                    <CardTitle className="text-2xl whitespace-nowrap overflow-hidden text-ellipsis">{quiz.title}</CardTitle>
+                    <CardTitle className="text-2xl whitespace-nowrap overflow-hidden text-ellipsis">
+                      {quiz.title}
+                    </CardTitle>
                   </CardHeader>
                   <CardFooter className="p-0 mt-4 flex gap-2">
-                    <Link href={`/dashboard/${slugify(quiz.title)}`} className="flex-1">
+                    <Link
+                      href={`/dashboard/${formatTitle(quiz.title)}`}
+                      className="flex-1"
+                    >
                       <Button className="w-full">View</Button>
                     </Link>
                     <DropdownMenu>
@@ -127,7 +131,7 @@ export default function Dashboard() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => handleDeleteClick(quiz)}
                         >
@@ -142,7 +146,7 @@ export default function Dashboard() {
           ))}
         </div>
       )}
-      
+
       <DeleteQuizModal
         isOpen={deleteModalOpen}
         onClose={() => {

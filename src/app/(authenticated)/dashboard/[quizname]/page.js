@@ -51,7 +51,6 @@ export default function QuizPage({ params }) {
         router.push("/dashboard");
         return;
       }
-      console.log("Fetched Quiz Data:", result);
       setQuiz(result);
       setQuestions(result.questions);
       setLoading(false);
@@ -218,9 +217,7 @@ export default function QuizPage({ params }) {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold title-break">
-          {quiz.title}
-        </h1>
+        <h1 className="text-3xl font-bold title-break">{quiz.title}</h1>
         <Link href="/dashboard">
           <Button variant="outline">Back to Dashboard</Button>
         </Link>
@@ -367,7 +364,8 @@ export default function QuizPage({ params }) {
                       toast({
                         variant: "destructive",
                         title: "Error",
-                        description: "Please answer the question first to view the explanation.",
+                        description:
+                          "Please answer the question first to view the explanation.",
                       });
                       return;
                     }
@@ -378,7 +376,9 @@ export default function QuizPage({ params }) {
                   }}
                   className="mt-2"
                 >
-                  {explanationVisible[index] ? "Hide Explanation" : "View Explanation"}
+                  {explanationVisible[index]
+                    ? "Hide Explanation"
+                    : "View Explanation"}
                 </Button>
 
                 {/* Explanation Box */}

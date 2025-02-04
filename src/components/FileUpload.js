@@ -228,8 +228,13 @@ export default function TextInput() {
 
       const { error } = await saveQuiz(user.uid, quizData);
 
+      // quiz already exists with title
       if (error) {
-        console.error("Error saving quiz:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error,
+        });
         return;
       }
 
@@ -442,7 +447,9 @@ export default function TextInput() {
                         }));
                       }}
                     >
-                      {explanationVisible[index] ? "Hide Explanation" : "View Explanation"}
+                      {explanationVisible[index]
+                        ? "Hide Explanation"
+                        : "View Explanation"}
                     </Button>
 
                     {/* Explanation Box */}
