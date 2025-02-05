@@ -141,7 +141,6 @@ export default function TextInput() {
   const [studyText, setStudyText] = useState("");
   const [topics, setTopics] = useState(null);
   const [questions, setQuestions] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [checkedAnswers, setCheckedAnswers] = useState({});
   const [editingIndex, setEditingIndex] = useState(null);
@@ -161,6 +160,14 @@ export default function TextInput() {
     'true-false': 2,
     'short-answer': 2
   });
+
+  // Separate loading states for different operations
+  const [loadingStates, setLoadingStates] = useState({}); // For individual question regeneration
+  const [isGenerating, setIsGenerating] = useState(false); // For main question generation
+  const [isAnalyzing, setIsAnalyzing] = useState(false); // For topic analysis
+
+  // Add state for storing previous questions during regeneration
+  const [pendingRegeneration, setPendingRegeneration] = useState({});
 
   const handleEditClick = (index) => {
     setEditingIndex(index);
@@ -254,7 +261,7 @@ export default function TextInput() {
       return;
     }
 
-    setLoading(true);
+    setIsAnalyzing(true);
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
@@ -268,15 +275,13 @@ export default function TextInput() {
 
       const rawData = await response.json();
 
-      // Check if the response is an error message
       if (rawData.error) {
         throw new Error(rawData.error);
       }
 
       try {
-        // Parse the response and access the 'topics' array
         const parsedData = JSON.parse(rawData);
-        setTopics(parsedData.topics); // Access the 'topics' array from the parsed object
+        setTopics(parsedData.topics);
       } catch (parseError) {
         console.error("Error parsing JSON:", parseError);
         setTopics([
@@ -289,7 +294,7 @@ export default function TextInput() {
     } catch (error) {
       console.error("Error analyzing text:", error);
     } finally {
-      setLoading(false);
+      setIsAnalyzing(false);
     }
   };
 
@@ -303,7 +308,7 @@ export default function TextInput() {
       return;
     }
   
-    setLoading(true);
+    setIsGenerating(true);
     try {
       const response = await fetch("/api/questiongen", {
         method: "POST",
@@ -328,7 +333,7 @@ export default function TextInput() {
     } catch (error) {
       console.error("Error generating questions:", error);
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
     }
   };
 
@@ -440,6 +445,102 @@ export default function TextInput() {
       });
   };
 
+  const handleRegenerateQuestion = async (index) => {
+    setLoadingStates(prev => ({ ...prev, [index]: true }));
+    
+    try {
+      const question = questions[index];
+      const response = await fetch("/api/regenerate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          text: studyText,
+          questionType: question.type
+        }),
+      });
+
+      if (!response.ok) throw new Error("Question regeneration failed");
+
+      const newQuestion = await response.json();
+      if (newQuestion.error) {
+        throw new Error(newQuestion.error);
+      }
+
+      // Store the current question before replacing it
+      setPendingRegeneration(prev => ({
+        ...prev,
+        [index]: {
+          previous: questions[index],
+          new: newQuestion
+        }
+      }));
+
+      setQuestions(prevQuestions => 
+        prevQuestions.map((q, i) => 
+          i === index ? newQuestion : q
+        )
+      );
+
+      // Reset states for this question
+      setSelectedAnswers(prev => {
+        const updated = { ...prev };
+        delete updated[index];
+        return updated;
+      });
+      setCheckedAnswers(prev => {
+        const updated = { ...prev };
+        delete updated[index];
+        return updated;
+      });
+      setExplanationVisible(prev => {
+        const updated = { ...prev };
+        delete updated[index];
+        return updated;
+      });
+
+    } catch (error) {
+      console.error("Error regenerating question:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to regenerate question",
+      });
+    } finally {
+      setLoadingStates(prev => {
+        const updated = { ...prev };
+        delete updated[index];
+        return updated;
+      });
+    }
+  };
+
+  const handleAcceptRegeneration = (index) => {
+    // Clear the pending regeneration state
+    setPendingRegeneration(prev => {
+      const updated = { ...prev };
+      delete updated[index];
+      return updated;
+    });
+  };
+
+  const handleRevertRegeneration = (index) => {
+    // Revert to the previous question
+    setQuestions(prevQuestions =>
+      prevQuestions.map((q, i) =>
+        i === index ? pendingRegeneration[index].previous : q
+      )
+    );
+
+    // Clear the pending regeneration state
+    setPendingRegeneration(prev => {
+      const updated = { ...prev };
+      delete updated[index];
+      return updated;
+    });
+  };
+
   return (
     <div className="space-y-4 my-12 max-w-4xl">
       <Button 
@@ -465,13 +566,17 @@ export default function TextInput() {
         </Button>
         <Button 
           onClick={generateQuestions}
-          disabled={loading}
+          disabled={isGenerating}
           className="w-1/3"
         >
-          {loading ? "Generating..." : "Generate Questions"}
+          {isGenerating ? "Generating..." : "Generate Questions"}
         </Button>
-        <Button onClick={analyzeText} className="w-1/3" disabled={loading}>
-          {loading ? "Analyzing..." : "Analyze Topics"}
+        <Button 
+          onClick={analyzeText} 
+          className="w-1/3" 
+          disabled={isAnalyzing}
+        >
+          {isAnalyzing ? "Analyzing..." : "Analyze Topics"}
         </Button>
       </div>
       <QuizConfigModal 
@@ -505,12 +610,43 @@ export default function TextInput() {
                     <h3 className="font-semibold text-lg">
                       Question {index + 1}
                     </h3>
-                    <Button
-                      onClick={() => handleDeleteQuestion(index)}
-                      variant="destructive"
-                    >
-                      Delete
-                    </Button>
+                    <div className="flex gap-2">
+                      {pendingRegeneration[index] ? (
+                        <>
+                          <Button
+                            onClick={() => handleAcceptRegeneration(index)}
+                            variant="save"
+                            size="sm"
+                          >
+                            Keep New
+                          </Button>
+                          <Button
+                            onClick={() => handleRevertRegeneration(index)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Revert
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            onClick={() => handleRegenerateQuestion(index)}
+                            variant="outline"
+                            size="sm"
+                            disabled={loadingStates[index]}
+                          >
+                            {loadingStates[index] ? "Regenerating..." : "Regenerate"}
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteQuestion(index)}
+                            variant="destructive"
+                          >
+                            Delete
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                   {editingIndex === index ? (
                     <input
