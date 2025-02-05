@@ -17,7 +17,7 @@ const navigationItems = [
   // { href: '/profile', label: 'Profile', icon: FaRegUserCircle },
   // { href: '/usersettings', label: 'Settings', icon: TbSettings },
   { href: "/dashboard/create", label: "Create New", icon: IoAddCircleOutline },
-  { href: "/dashboard/library", label: "Library", icon: MdFolderOpen },
+  // { href: "/dashboard/library", label: "Library", icon: MdFolderOpen },
 ];
 
 export default function AuthenticatedLayout({ children }) {
