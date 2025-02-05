@@ -26,7 +26,7 @@ export default function Home() {
           <div className="py-20 flex flex-col gap-8 items-center text-center w-full">
             <h1 className="text-6xl font-bold text-blue-700">QuizWiz</h1>
             <p className="text-xl">Create quizzes from learning materials with AI.</p>
-            <Link href="/login" passHref>
+            <Link href="/signup" passHref>
               <Button
                 className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
                 rel="noopener noreferrer"
