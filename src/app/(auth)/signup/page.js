@@ -2,6 +2,7 @@
 import signUp from "@/firebase/auth/signup";
 import { useRouter } from 'next/navigation';
 import { useState } from "react";
+import Link from "next/link";
 
 function Page() {
   const [ email, setEmail ] = useState( '' );
@@ -29,9 +30,9 @@ function Page() {
   }
 
   return (
-    <div className="flex justify-center items-center h-screen text-black">
+    <div className="flex flex-col justify-center items-center h-screen text-black">
       <div className="w-96 bg-white rounded shadow p-6">
-        <h1 className="text-3xl font-bold mb-6">Registration</h1>
+        <h1 className="text-3xl font-bold mb-6">Sign Up</h1>
         <form onSubmit={handleForm} className="space-y-4">
           <div>
             <label htmlFor="email" className="block mb-1 font-medium">
@@ -68,6 +69,9 @@ function Page() {
             Sign up
           </button>
         </form>
+      </div>
+      <div className="w-96 p-6">
+        <span>Already have an account? <Link href="/login" className="text-blue-500 hover:text-blue-600">Sign in</Link></span>
       </div>
     </div>
   );

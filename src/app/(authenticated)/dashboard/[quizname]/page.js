@@ -91,9 +91,16 @@ export default function QuizPage({ params }) {
 
   const checkAnswer = (questionIndex) => {
     const question = questions[questionIndex];
-
-    const isCorrect =
-      selectedAnswers[questionIndex] === question.correct_answer;
+    let isCorrect;
+    
+    if (question.type === 'short-answer') {
+      const userAnswer = (selectedAnswers[questionIndex] || '').toLowerCase().trim();
+      const correctAnswer = question.correct_answer.toLowerCase().trim();
+      isCorrect = userAnswer === correctAnswer;
+    } else {
+      isCorrect = selectedAnswers[questionIndex] === question.correct_answer;
+    }
+    
     setCheckedAnswers({
       ...checkedAnswers,
       [questionIndex]: isCorrect,
@@ -105,23 +112,35 @@ export default function QuizPage({ params }) {
   };
 
   const handleSaveEdit = async () => {
-    if (!questions[editingIndex].answers.includes(editingCorrectAnswer)) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please select a correct answer before saving.",
-      });
-      return;
-    }
-
     const question = questions[editingIndex];
-    if (question.answers.some((answer) => !answer.trim())) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "All answer choices must be filled out before saving.",
-      });
-      return;
+    
+    if (question.type === 'short-answer') {
+      if (!editingCorrectAnswer?.trim()) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please enter a correct answer before saving.",
+        });
+        return;
+      }
+    } else {
+      if (!question.answers.includes(editingCorrectAnswer)) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please select a correct answer before saving.",
+        });
+        return;
+      }
+
+      if (question.answers.some((answer) => !answer.trim())) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "All answer choices must be filled out before saving.",
+        });
+        return;
+      }
     }
 
     const updatedQuestions = questions.map((q, i) =>
@@ -272,20 +291,22 @@ export default function QuizPage({ params }) {
                 )}
               </CardHeader>
               <CardContent>
-                <RadioGroup
-                  value={selectedAnswers[index]}
-                  onValueChange={(value) =>
-                    setSelectedAnswers({
-                      ...selectedAnswers,
-                      [index]: value,
-                    })
-                  }
-                  disabled={submitted}
-                >
-                  {question.answers.map((answer, ansIndex) => (
-                    <div key={ansIndex} className="flex items-center space-x-2">
-                      {editingIndex === index ? (
-                        <>
+                {editingIndex === index ? (
+                  question.type === 'short-answer' ? (
+                    <div className="space-y-2">
+                      <Label>Correct Answer</Label>
+                      <input
+                        type="text"
+                        value={editingCorrectAnswer || ''}
+                        onChange={(e) => setEditingCorrectAnswer(e.target.value)}
+                        className="w-full border border-gray-300 rounded px-3 py-2"
+                        placeholder="Enter correct answer..."
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      {question.answers.map((answer, ansIndex) => (
+                        <div key={ansIndex} className="flex items-center space-x-2">
                           <input
                             type="text"
                             value={answer}
@@ -306,9 +327,40 @@ export default function QuizPage({ params }) {
                             }
                             className="h-6 w-6 checked:border-blue-500"
                           />
-                        </>
-                      ) : (
-                        <>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  question.type === 'short-answer' ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={selectedAnswers[index] || ''}
+                        onChange={(e) => 
+                          setSelectedAnswers({
+                            ...selectedAnswers,
+                            [index]: e.target.value
+                          })
+                        }
+                        className="w-full border border-gray-300 rounded px-3 py-2"
+                        placeholder="Type your answer here..."
+                        disabled={submitted}
+                      />
+                    </div>
+                  ) : (
+                    <RadioGroup
+                      value={selectedAnswers[index]}
+                      onValueChange={(value) =>
+                        setSelectedAnswers({
+                          ...selectedAnswers,
+                          [index]: value,
+                        })
+                      }
+                      disabled={submitted}
+                    >
+                      {question.answers.map((answer, ansIndex) => (
+                        <div key={ansIndex} className="flex items-center space-x-2">
                           <RadioGroupItem
                             value={answer}
                             id={`q${index}-a${ansIndex}`}
@@ -316,11 +368,11 @@ export default function QuizPage({ params }) {
                           <Label htmlFor={`q${index}-a${ansIndex}`}>
                             {answer}
                           </Label>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </RadioGroup>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  )
+                )}
               </CardContent>
               <CardFooter className="flex flex-col gap-2">
                 {editingIndex === index ? (

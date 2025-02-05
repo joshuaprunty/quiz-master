@@ -16,9 +16,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { slugify } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
+import RenameQuizModal from "@/components/RenameQuizModal";
+import { useToast } from "@/hooks/use-toast";
+import updateQuiz from "@/firebase/firestore/updateQuiz";
 
 export default function Dashboard() {
   const { user } = useAuthContext();
@@ -28,6 +30,8 @@ export default function Dashboard() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [quizToRename, setQuizToRename] = useState(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user == null) {
@@ -73,6 +77,38 @@ export default function Dashboard() {
       setIsDeleting(false);
       setDeleteModalOpen(false);
       setSelectedQuiz(null);
+    }
+  };
+
+  const handleRename = async (newTitle) => {
+    if (!quizToRename) return;
+    
+    try {
+      const updatedQuiz = { ...quizToRename, title: newTitle };
+      const { error } = await updateQuiz(user.uid, quizToRename.id, updatedQuiz);
+      
+      if (error) throw new Error(error);
+      
+      // Update local state
+      setQuizzes(prevQuizzes => 
+        prevQuizzes.map(quiz => 
+          quiz.id === quizToRename.id ? { ...quiz, title: newTitle } : quiz
+        )
+      );
+      
+      toast({
+        title: "Success",
+        description: "Quiz renamed successfully.",
+      });
+    } catch (error) {
+      console.error("Error renaming quiz:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to rename quiz.",
+      });
+    } finally {
+      setQuizToRename(null);
     }
   };
 
@@ -131,11 +167,14 @@ export default function Dashboard() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => setQuizToRename(quiz)}>
+                          <span>Rename</span>
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => handleDeleteClick(quiz)}
                         >
-                          Delete
+                          <span>Delete</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -156,6 +195,13 @@ export default function Dashboard() {
         onConfirm={handleDeleteConfirm}
         loading={isDeleting}
         quizTitle={selectedQuiz?.title}
+      />
+
+      <RenameQuizModal 
+        isOpen={!!quizToRename}
+        onClose={() => setQuizToRename(null)}
+        onRename={handleRename}
+        currentTitle={quizToRename?.title || ''}
       />
     </div>
   );

@@ -37,34 +37,20 @@ const ResponseSchema = z.object({
 
 export async function POST(request) {
   try {
-    const { text, config } = await request.json();
+    const { text, questionType } = await request.json();
     
-    const systemPrompt = `You are a helpful teaching assistant. Analyze the provided study materials and generate questions according to the following configuration:
+    const systemPrompt = `You are a helpful teaching assistant. Generate 1 ${questionType} question based on the provided study materials. The question should test understanding of the core concepts. Format as:
 
-    ${config['multiple-choice']} multiple choice questions in this format:
     {
-      "type": "multiple-choice",
+      "type": "${questionType}",
       "question": "question text",
-      "answers": ["option1", "option2", "option3", "option4"],
+      ${questionType === 'short-answer' ? `
       "correct_answer": "exact text of correct answer",
-      "explanation": "The correct answer is <correct_answer>. It is correct because ..."
-    }
-
-    ${config['true-false']} true/false questions in this format:
-    {
-      "type": "true-false",
-      "question": "question text",
-      "answers": ["True", "False"],
-      "correct_answer": "True" or "False",
-      "explanation": "The correct answer is <true/false>. It is correct because ..."
-    }
-
-    ${config['short-answer']} short answer questions in this format:
-    {
-      "type": "short-answer",
-      "question": "question text",
+      "explanation": "The correct answer is <correct_answer>. It is correct because ..."` 
+      : `
+      "answers": ${questionType === 'true-false' ? '["True", "False"]' : '["option1", "option2", "option3", "option4"]'},
       "correct_answer": "exact text of correct answer",
-      "explanation": "The correct answer is <correct_answer>. It is correct because ..."
+      "explanation": "The correct answer is <correct_answer>. It is correct because ..."`}
     }`;
 
     const response = await openai.beta.chat.completions.parse({
@@ -76,10 +62,10 @@ export async function POST(request) {
       response_format: zodResponseFormat(ResponseSchema, "questions"),
     });
     
-    const questions = response.choices[0].message.parsed.questions;
-    return Response.json(questions);
+    const question = response.choices[0].message.parsed.questions[0];
+    return Response.json(question);
   } catch (error) {
     console.error('OpenAI API error:', error);
-    return Response.json({ error: 'Failed to analyze text' }, { status: 500 });
+    return Response.json({ error: 'Failed to regenerate question' }, { status: 500 });
   }
 }

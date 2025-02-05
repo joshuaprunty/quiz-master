@@ -17,28 +17,155 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import SaveQuizModal from "./SaveQuizModal";
+import QuizConfigModal from "./QuizConfigModal";
+
+const COPY_TEXT =
+`
+Lecture 3: Application-Layer Protocols, HTTP - Key Points
+Application-Layer Protocols
+Purpose:
+Enable applications on different devices to communicate.
+Examples: HTTP, SMTP, DNS.
+Two Architectures:
+Client-Server:
+Servers handle requests and are always powered on.
+Clients initiate requests but do not communicate directly with other clients.
+Peer-to-Peer (P2P):
+Peers share equal responsibilities (e.g., BitTorrent, Skype).
+Scalable but challenging due to churn, IP changes, and upload limitations.
+
+HTTP (HyperText Transfer Protocol)
+Overview:
+Client-server protocol built on top of TCP.
+Stateless: Each request is independent and self-contained.
+Key Features:
+Request:
+Includes a method (e.g., GET, POST), headers, and an optional body.
+Response:
+Includes a status code (e.g., 200 OK, 404 Not Found), headers, and an optional body.
+HTTP Transaction:
+Client opens a TCP socket to the server.
+Sends an HTTP request.
+Server processes the request and sends a response.
+Client reads and processes the response.
+
+HTTP Methods and Status Codes
+Methods:
+GET: Retrieve data.
+POST: Send data to the server.
+PUT: Create/replace a resource.
+DELETE: Remove a resource.
+HEAD: Retrieve headers only.
+Status Codes:
+2xx: Success (e.g., 200 OK).
+3xx: Redirection (e.g., 301 Moved Permanently).
+4xx: Client errors (e.g., 404 Not Found).
+5xx: Server errors (e.g., 500 Internal Server Error).
+
+Cookies
+Purpose:
+Maintain user state across stateless HTTP requests.
+Process:
+Server sends a Set-Cookie header in the HTTP response.
+Client stores the cookie locally and includes it in subsequent requests.
+Server identifies the user using the cookie.
+Uses:
+Authentication, session tracking, personalization.
+Security Concerns:
+Vulnerable to impersonation attacks (e.g., CSRF).
+Best practices include setting SameSite attributes to prevent misuse.
+
+HTTP Evolution and REST APIs
+Evolution:
+HTTP/1.0 (1991): Basic document fetching.
+HTTP/1.1 (1997): Keep-alive connections.
+HTTP/2 (2014): Binary framing and pipelining.
+HTTP/3 (2022): Built on QUIC for better performance.
+REST APIs:
+Use HTTP for client-server communication.
+Enable interaction with services via structured requests (e.g., GET, POST).
+Often return JSON data for programmatic use.
+
+SMTP (Simple Mail Transfer Protocol)
+Purpose:
+Enables email transfer between servers using TCP (port 25).
+Process:
+Stateful communication where the server remembers past interactions.
+Commands like MAIL FROM, RCPT TO, and DATA establish and send messages.
+Differences from HTTP:
+SMTP is stateful, while HTTP is stateless.
+
+
+Lecture 4: Domain Name Service (DNS) - Key Points
+DNS: The Internet's Directory Service
+Goals of DNS:
+Translate human-readable domain names to machine-readable IP addresses (e.g., northwestern.edu → 129.105.136.48).
+Provide portability by allowing domain names to remain constant even as server IP addresses change.
+Distributed and Hierarchical Design:
+Decentralized structure for scalability and fault tolerance.
+Hierarchical levels:
+Root Servers: Manage top-level domains (TLDs) like .com, .edu.
+TLD Servers: Direct queries to authoritative servers.
+Authoritative Servers: Store mappings for specific domains (e.g., example.com).
+
+How DNS Works
+Iterative Querying:
+Queries traverse the hierarchy:
+Client contacts the root server.
+Root server directs the client to the TLD server.
+TLD server points to the authoritative server.
+Authoritative server provides the requested IP address.
+Caching:
+Local DNS resolvers cache responses to reduce query times and network traffic.
+Cached records have a TTL (Time to Live) after which they expire.
+
+DNS Records
+Types of Resource Records (RRs):
+A: Maps domain names to IPv4 addresses.
+AAAA: Maps domain names to IPv6 addresses.
+CNAME: Canonical name alias for another domain.
+MX: Mail exchange records for email routing.
+PTR: Reverse lookup, mapping IP to domain name.
+TXT: Key-value pairs for arbitrary data (e.g., SPF, DKIM).
+SRV: Defines servers for specific services.
+`
 
 export default function TextInput() {
   const [studyText, setStudyText] = useState("");
   const [topics, setTopics] = useState(null);
   const [questions, setQuestions] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [checkedAnswers, setCheckedAnswers] = useState({});
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingCorrectAnswer, setEditingCorrectAnswer] = useState(null);
   const [saveDisabled, setSaveDisabled] = useState(false);
   const [explanationVisible, setExplanationVisible] = useState({});
+  const [questionType, setQuestionType] = useState("multiple-choice");
 
   const { user } = useAuthContext();
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [questionConfig, setQuestionConfig] = useState({
+    'multiple-choice': 4,
+    'true-false': 2,
+    'short-answer': 2
+  });
+
+  // Separate loading states for different operations
+  const [loadingStates, setLoadingStates] = useState({}); // For individual question regeneration
+  const [isGenerating, setIsGenerating] = useState(false); // For main question generation
+  const [isAnalyzing, setIsAnalyzing] = useState(false); // For topic analysis
+
+  // Add state for storing previous questions during regeneration
+  const [pendingRegeneration, setPendingRegeneration] = useState({});
 
   const handleEditClick = (index) => {
     setEditingIndex(index);
-    setEditingCorrectAnswer(questions[index].correct_answer);
+    const question = questions[index];
+    setEditingCorrectAnswer(question.correct_answer);
   };
 
   const handleEditChange = (index, field, value) => {
@@ -71,23 +198,36 @@ export default function TextInput() {
   };
 
   const handleSaveEdit = () => {
-    if (!questions[editingIndex].answers.includes(editingCorrectAnswer)) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please select a correct answer before saving.",
-      });
-      return;
-    }
-
     const question = questions[editingIndex];
-    if (question.answers.some((answer) => !answer.trim())) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "All answer choices must be filled out before saving.",
-      });
-      return;
+    
+    if (question.type === 'short-answer') {
+      if (!editingCorrectAnswer?.trim()) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please enter a correct answer before saving.",
+        });
+        return;
+      }
+    } else {
+      // For multiple choice and true-false questions
+      if (!question.answers.includes(editingCorrectAnswer)) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please select a correct answer before saving.",
+        });
+        return;
+      }
+
+      if (question.answers.some((answer) => !answer.trim())) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "All answer choices must be filled out before saving.",
+        });
+        return;
+      }
     }
 
     setQuestions((prevQuestions) =>
@@ -114,7 +254,7 @@ export default function TextInput() {
       return;
     }
 
-    setLoading(true);
+    setIsAnalyzing(true);
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
@@ -128,15 +268,13 @@ export default function TextInput() {
 
       const rawData = await response.json();
 
-      // Check if the response is an error message
       if (rawData.error) {
         throw new Error(rawData.error);
       }
 
       try {
-        // Parse the response and access the 'topics' array
         const parsedData = JSON.parse(rawData);
-        setTopics(parsedData.topics); // Access the 'topics' array from the parsed object
+        setTopics(parsedData.topics);
       } catch (parseError) {
         console.error("Error parsing JSON:", parseError);
         setTopics([
@@ -149,7 +287,7 @@ export default function TextInput() {
     } catch (error) {
       console.error("Error analyzing text:", error);
     } finally {
-      setLoading(false);
+      setIsAnalyzing(false);
     }
   };
 
@@ -162,38 +300,48 @@ export default function TextInput() {
       });
       return;
     }
-
-    setLoading(true);
+  
+    setIsGenerating(true);
     try {
       const response = await fetch("/api/questiongen", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: studyText }),
+        body: JSON.stringify({ 
+          text: studyText,
+          config: questionConfig 
+        }),
       });
-
+  
       if (!response.ok) throw new Error("Question generation failed");
-
+  
       const data = await response.json();
       if (data.error) {
         throw new Error(data.error);
       }
-
       setQuestions(data);
       setSelectedAnswers({});
       setCheckedAnswers({});
     } catch (error) {
       console.error("Error generating questions:", error);
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
     }
   };
 
   const checkAnswer = (questionIndex) => {
     const question = questions[questionIndex];
-    const isCorrect =
-      selectedAnswers[questionIndex] === question.correct_answer;
+    let isCorrect;
+    
+    if (question.type === 'short-answer') {
+      const userAnswer = (selectedAnswers[questionIndex] || '').toLowerCase().trim();
+      const correctAnswer = question.correct_answer.toLowerCase().trim();
+      isCorrect = userAnswer === correctAnswer;
+    } else {
+      isCorrect = selectedAnswers[questionIndex] === question.correct_answer;
+    }
+    
     setCheckedAnswers({
       ...checkedAnswers,
       [questionIndex]: isCorrect,
@@ -208,7 +356,7 @@ export default function TextInput() {
 
     // Validate that all questions have non-empty answers
     for (const question of questions) {
-      if (question.answers.some((answer) => !answer.trim())) {
+      if (question.type !== 'short-answer' && question.answers.some((answer) => !answer.trim())) {
         toast({
           variant: "destructive",
           title: "Error",
@@ -273,28 +421,162 @@ export default function TextInput() {
     }
   };
 
+  const copyTest = () => {
+    navigator.clipboard.writeText(COPY_TEXT)
+      .then(() => {
+        toast({
+          title: "Copied",
+          description: `Sample notes copied to clipboard`,
+        });
+      })
+      .catch(() => {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to copy text",
+        });
+      });
+  };
+
+  const handleRegenerateQuestion = async (index) => {
+    setLoadingStates(prev => ({ ...prev, [index]: true }));
+    
+    try {
+      const question = questions[index];
+      const response = await fetch("/api/regenerate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          text: studyText,
+          questionType: question.type
+        }),
+      });
+
+      if (!response.ok) throw new Error("Question regeneration failed");
+
+      const newQuestion = await response.json();
+      if (newQuestion.error) {
+        throw new Error(newQuestion.error);
+      }
+
+      // Store the current question before replacing it
+      setPendingRegeneration(prev => ({
+        ...prev,
+        [index]: {
+          previous: questions[index],
+          new: newQuestion
+        }
+      }));
+
+      setQuestions(prevQuestions => 
+        prevQuestions.map((q, i) => 
+          i === index ? newQuestion : q
+        )
+      );
+
+      // Reset states for this question
+      setSelectedAnswers(prev => {
+        const updated = { ...prev };
+        delete updated[index];
+        return updated;
+      });
+      setCheckedAnswers(prev => {
+        const updated = { ...prev };
+        delete updated[index];
+        return updated;
+      });
+      setExplanationVisible(prev => {
+        const updated = { ...prev };
+        delete updated[index];
+        return updated;
+      });
+
+    } catch (error) {
+      console.error("Error regenerating question:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to regenerate question",
+      });
+    } finally {
+      setLoadingStates(prev => {
+        const updated = { ...prev };
+        delete updated[index];
+        return updated;
+      });
+    }
+  };
+
+  const handleAcceptRegeneration = (index) => {
+    // Clear the pending regeneration state
+    setPendingRegeneration(prev => {
+      const updated = { ...prev };
+      delete updated[index];
+      return updated;
+    });
+  };
+
+  const handleRevertRegeneration = (index) => {
+    // Revert to the previous question
+    setQuestions(prevQuestions =>
+      prevQuestions.map((q, i) =>
+        i === index ? pendingRegeneration[index].previous : q
+      )
+    );
+
+    // Clear the pending regeneration state
+    setPendingRegeneration(prev => {
+      const updated = { ...prev };
+      delete updated[index];
+      return updated;
+    });
+  };
+
   return (
     <div className="space-y-4 my-12 max-w-4xl">
+      <Button 
+        onClick={copyTest}
+        variant="outline"
+        className="w-[100px]"
+      >
+        Copy Sample Input
+      </Button>
       <Textarea
         placeholder="Paste your study materials here..."
         className="min-h-[300px]"
         value={studyText}
         onChange={(e) => setStudyText(e.target.value)}
       />
-
       <div className="flex gap-4">
-        <Button onClick={analyzeText} className="flex-1" disabled={loading}>
-          {loading ? "Analyzing..." : "Analyze Topics"}
-        </Button>
-
-        <Button
-          onClick={generateQuestions}
-          className="flex-1"
-          disabled={loading}
+        <Button 
+          variant="outline" 
+          onClick={() => setIsConfigModalOpen(true)}
+          className="w-1/3"
         >
-          {loading ? "Generating..." : "Generate Questions"}
+          Configure Questions
+        </Button>
+        <Button 
+          onClick={generateQuestions}
+          disabled={isGenerating}
+          className="w-1/3"
+        >
+          {isGenerating ? "Generating..." : "Generate Questions"}
+        </Button>
+        <Button 
+          onClick={analyzeText} 
+          className="w-1/3" 
+          disabled={isAnalyzing}
+        >
+          {isAnalyzing ? "Analyzing..." : "Analyze Topics"}
         </Button>
       </div>
+      <QuizConfigModal 
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        onSave={setQuestionConfig}
+      />
 
       {topics && (
         <div className="mt-8 space-y-4">
@@ -321,12 +603,43 @@ export default function TextInput() {
                     <h3 className="font-semibold text-lg">
                       Question {index + 1}
                     </h3>
-                    <Button
-                      onClick={() => handleDeleteQuestion(index)}
-                      variant="destructive"
-                    >
-                      Delete
-                    </Button>
+                    <div className="flex gap-2">
+                      {pendingRegeneration[index] ? (
+                        <>
+                          <Button
+                            onClick={() => handleAcceptRegeneration(index)}
+                            variant="save"
+                            size="sm"
+                          >
+                            Keep New
+                          </Button>
+                          <Button
+                            onClick={() => handleRevertRegeneration(index)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Revert
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            onClick={() => handleRegenerateQuestion(index)}
+                            variant="outline"
+                            size="sm"
+                            disabled={loadingStates[index]}
+                          >
+                            {loadingStates[index] ? "Regenerating..." : "Regenerate"}
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteQuestion(index)}
+                            variant="destructive"
+                          >
+                            Delete
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                   {editingIndex === index ? (
                     <input
@@ -342,22 +655,22 @@ export default function TextInput() {
                   )}
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup
-                    value={selectedAnswers[index]}
-                    onValueChange={(value) =>
-                      setSelectedAnswers({
-                        ...selectedAnswers,
-                        [index]: value,
-                      })
-                    }
-                  >
-                    {question.answers.map((answer, ansIndex) => (
-                      <div
-                        key={ansIndex}
-                        className="flex items-center space-x-2"
-                      >
-                        {editingIndex === index ? (
-                          <>
+                  {editingIndex === index ? (
+                    question.type === 'short-answer' ? (
+                      <div className="space-y-2">
+                        <Label>Correct Answer</Label>
+                        <input
+                          type="text"
+                          value={editingCorrectAnswer || ''}
+                          onChange={(e) => setEditingCorrectAnswer(e.target.value)}
+                          className="w-full border border-gray-300 rounded px-3 py-2"
+                          placeholder="Enter correct answer..."
+                        />
+                      </div>
+                    ) : (
+                      <RadioGroup>
+                        {question.answers.map((answer, ansIndex) => (
+                          <div key={ansIndex} className="flex items-center space-x-2">
                             <input
                               type="text"
                               value={answer}
@@ -378,9 +691,41 @@ export default function TextInput() {
                               }
                               className="h-6 w-6 checked:border-blue-500"
                             />
-                          </>
-                        ) : (
-                          <>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    )
+                  ) : (
+                    question.type === 'short-answer' ? (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={selectedAnswers[index] || ''}
+                          onChange={(e) => 
+                            setSelectedAnswers({
+                              ...selectedAnswers,
+                              [index]: e.target.value
+                            })
+                          }
+                          className="w-full border border-gray-300 rounded px-3 py-2"
+                          placeholder="Type your answer here..."
+                        />
+                      </div>
+                    ) : (
+                      <RadioGroup
+                        value={selectedAnswers[index]}
+                        onValueChange={(value) =>
+                          setSelectedAnswers({
+                            ...selectedAnswers,
+                            [index]: value,
+                          })
+                        }
+                      >
+                        {question.answers.map((answer, ansIndex) => (
+                          <div
+                            key={ansIndex}
+                            className="flex items-center space-x-2"
+                          >
                             <RadioGroupItem
                               value={answer}
                               id={`q${index}-a${ansIndex}`}
@@ -388,11 +733,11 @@ export default function TextInput() {
                             <Label htmlFor={`q${index}-a${ansIndex}`}>
                               {answer}
                             </Label>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </RadioGroup>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    )
+                  )}
                 </CardContent>
                 <CardFooter className="flex flex-col gap-2">
                   {editingIndex === index ? (
