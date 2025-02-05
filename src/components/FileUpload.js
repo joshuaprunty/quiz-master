@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import QuizConfigModal from "./QuizConfigModal";
 
 const COPY_TEXT =
 `
@@ -154,6 +155,12 @@ export default function TextInput() {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [questionConfig, setQuestionConfig] = useState({
+    'multiple-choice': 4,
+    'true-false': 2,
+    'short-answer': 2
+  });
 
   const handleEditClick = (index) => {
     setEditingIndex(index);
@@ -291,7 +298,7 @@ export default function TextInput() {
         },
         body: JSON.stringify({ 
           text: studyText,
-          type: questionType 
+          config: questionConfig 
         }),
       });
   
@@ -424,8 +431,9 @@ export default function TextInput() {
       <Button 
         onClick={copyTest}
         variant="outline"
+        className="w-[100px]"
       >
-        Copy Sample to Clipboard
+        Copy TEST
       </Button>
       <Textarea
         placeholder="Paste your study materials here..."
@@ -433,38 +441,30 @@ export default function TextInput() {
         value={studyText}
         onChange={(e) => setStudyText(e.target.value)}
       />
-
       <div className="flex gap-4">
-        <Button onClick={analyzeText} className="flex-1" disabled={loading}>
+        <Button 
+          variant="outline" 
+          onClick={() => setIsConfigModalOpen(true)}
+          className="w-1/3"
+        >
+          Configure Questions
+        </Button>
+        <Button 
+          onClick={generateQuestions}
+          disabled={loading}
+          className="w-1/3"
+        >
+          {loading ? "Generating..." : "Generate Questions"}
+        </Button>
+        <Button onClick={analyzeText} className="w-1/3" disabled={loading}>
           {loading ? "Analyzing..." : "Analyze Topics"}
         </Button>
-
-        <div className="flex gap-2">
-          <Select 
-            defaultValue="multiple-choice"
-            onValueChange={(value) => setQuestionType(value)}
-            disabled={loading}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Question Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-              <SelectItem value="true-false">True/False</SelectItem>
-              <SelectItem value="short-answer">Short Answer</SelectItem>
-              <SelectItem value="mixed">Mixed</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button
-            onClick={generateQuestions}
-            className="flex-1"
-            disabled={loading}
-          >
-            {loading ? "Generating..." : "Generate Questions"}
-          </Button>
-        </div>
       </div>
+      <QuizConfigModal 
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        onSave={setQuestionConfig}
+      />
 
       {topics && (
         <div className="mt-8 space-y-4">

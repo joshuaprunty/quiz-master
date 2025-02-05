@@ -37,84 +37,46 @@ const ResponseSchema = z.object({
 
 export async function POST(request) {
   try {
-    const { text, type } = await request.json();
-    let systemPrompt = '';
-    switch (type) {
-      case 'true-false':
-        systemPrompt = `You are a helpful teaching assistant. Analyze the provided study materials and generate 10 true/false questions with detailed explanations. 
-        Each question must follow this exact format:
-        {
-          "type": "true-false",
-          "question": "question text",
-          "answers": ["True", "False"],
-          "correct_answer": "True" or "False",
-          "explanation": "The correct answer is <true/false>. It is correct because ..."
-        }`;
-        break;
-      case 'multiple-choice':
-        systemPrompt = `You are a helpful teaching assistant. Analyze the provided study materials and generate 10 multiple choice questions with 4 options, 1 correct answer, and detailed explanations.
-        Each question must follow this exact format:
-        {
-          "type": "multiple-choice",
-          "question": "question text",
-          "answers": ["option1", "option2", "option3", "option4"],
-          "correct_answer": "exact text of correct answer",
-          "explanation": "The correct answer is <correct_answer>. It is correct because ..."
-        }`;
-        break;
-      case 'mixed':
-        systemPrompt = `You are a helpful teaching assistant. Analyze the provided study materials and generate a mix of questions:
-        4 multiple choice questions in this format:
-        {
-          "type": "multiple-choice",
-          "question": "question text",
-          "answers": ["option1", "option2", "option3", "option4"],
-          "correct_answer": "exact text of correct answer",
-          "explanation": "The correct answer is <correct_answer>. It is correct because ..."
-        }
-        
-        3 true/false questions in this format:
-        {
-          "type": "true-false",
-          "question": "question text",
-          "answers": ["True", "False"],
-          "correct_answer": "True" or "False",
-          "explanation": "The correct answer is <true/false>. It is correct because ..."
-        }
+    const { text, config } = await request.json();
+    
+    const systemPrompt = `You are a helpful teaching assistant. Analyze the provided study materials and generate questions according to the following configuration:
 
-        And 3 short answer questions in this format:
-        {
-          "type": "short-answer",
-          "question": "question text",
-          "correct_answer": "exact text of correct answer",
-          "explanation": "The correct answer is <correct_answer>. It is correct because ..."
-        }`;
-        break;
-      case 'short-answer':
-        systemPrompt = `You are a helpful teaching assistant. Analyze the provided study materials and generate 10 short answer questions with detailed explanations. 
-        Each question must follow this exact format:
-        {
-          "type": "short-answer",
-          "question": "question text",
-          "correct_answer": "exact text of correct answer",
-          "explanation": "The correct answer is <correct_answer>. It is correct because ..."
-        }`;
-        break;
-      default: // multiple-choice
-        systemPrompt = 'You are a helpful teaching assistant. Analyze the provided study materials and generate 10 multiple choice questions with 4 options, 1 correct answer, and a detailed explanation for the correct answer. The explanation must always begin with "The correct answer is <correct_answer>. It is correct because ..."';
-        break;
+    ${config['multiple-choice']} multiple choice questions in this format:
+    {
+      "type": "multiple-choice",
+      "question": "question text",
+      "answers": ["option1", "option2", "option3", "option4"],
+      "correct_answer": "exact text of correct answer",
+      "explanation": "The correct answer is <correct_answer>. It is correct because ..."
     }
+
+    ${config['true-false']} true/false questions in this format:
+    {
+      "type": "true-false",
+      "question": "question text",
+      "answers": ["True", "False"],
+      "correct_answer": "True" or "False",
+      "explanation": "The correct answer is <true/false>. It is correct because ..."
+    }
+
+    ${config['short-answer']} short answer questions in this format:
+    {
+      "type": "short-answer",
+      "question": "question text",
+      "correct_answer": "exact text of correct answer",
+      "explanation": "The correct answer is <correct_answer>. It is correct because ..."
+    }`;
 
     const response = await openai.beta.chat.completions.parse({
       model: "gpt-4o-2024-08-06",
       messages: [
-        { role: "system", content: systemPrompt, },
+        { role: "system", content: systemPrompt },
         { role: "user", content: text },
       ],
       response_format: zodResponseFormat(ResponseSchema, "questions"),
     });
     
-    const questions = response.choices[0].message.parsed.questions;  // Access the questions array from the parsed object
+    const questions = response.choices[0].message.parsed.questions;
     return Response.json(questions);
   } catch (error) {
     console.error('OpenAI API error:', error);
