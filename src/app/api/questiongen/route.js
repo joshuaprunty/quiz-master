@@ -22,7 +22,14 @@ const TFQuestion = z.object({
   explanation: z.string(),
 });
 
-const Question = z.union([MCQuestion, TFQuestion]);
+const SAQuestion = z.object({
+  type: z.literal('short-answer'),
+  question: z.string(),
+  correct_answer: z.string(),
+  explanation: z.string(),
+});
+
+const Question = z.union([MCQuestion, TFQuestion, SAQuestion]);
 
 const ResponseSchema = z.object({
   questions: z.array(Question)
@@ -57,7 +64,7 @@ export async function POST(request) {
         break;
       case 'mixed':
         systemPrompt = `You are a helpful teaching assistant. Analyze the provided study materials and generate a mix of questions:
-        5 multiple choice questions in this format:
+        4 multiple choice questions in this format:
         {
           "type": "multiple-choice",
           "question": "question text",
@@ -66,13 +73,31 @@ export async function POST(request) {
           "explanation": "The correct answer is <correct_answer>. It is correct because ..."
         }
         
-        And 5 true/false questions in this format:
+        3 true/false questions in this format:
         {
           "type": "true-false",
           "question": "question text",
           "answers": ["True", "False"],
           "correct_answer": "True" or "False",
           "explanation": "The correct answer is <true/false>. It is correct because ..."
+        }
+
+        And 3 short answer questions in this format:
+        {
+          "type": "short-answer",
+          "question": "question text",
+          "correct_answer": "exact text of correct answer",
+          "explanation": "The correct answer is <correct_answer>. It is correct because ..."
+        }`;
+        break;
+      case 'short-answer':
+        systemPrompt = `You are a helpful teaching assistant. Analyze the provided study materials and generate 10 short answer questions with detailed explanations. 
+        Each question must follow this exact format:
+        {
+          "type": "short-answer",
+          "question": "question text",
+          "correct_answer": "exact text of correct answer",
+          "explanation": "The correct answer is <correct_answer>. It is correct because ..."
         }`;
         break;
       default: // multiple-choice

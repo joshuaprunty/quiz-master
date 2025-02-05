@@ -313,8 +313,16 @@ export default function TextInput() {
 
   const checkAnswer = (questionIndex) => {
     const question = questions[questionIndex];
-    const isCorrect =
-      selectedAnswers[questionIndex] === question.correct_answer;
+    let isCorrect;
+    
+    if (question.type === 'short-answer') {
+      const userAnswer = (selectedAnswers[questionIndex] || '').toLowerCase().trim();
+      const correctAnswer = question.correct_answer.toLowerCase().trim();
+      isCorrect = userAnswer === correctAnswer;
+    } else {
+      isCorrect = selectedAnswers[questionIndex] === question.correct_answer;
+    }
+    
     setCheckedAnswers({
       ...checkedAnswers,
       [questionIndex]: isCorrect,
@@ -443,7 +451,8 @@ export default function TextInput() {
             <SelectContent>
               <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
               <SelectItem value="true-false">True/False</SelectItem>
-              <SelectItem value="mixed">Mixed (5 Each)</SelectItem>
+              <SelectItem value="short-answer">Short Answer</SelectItem>
+              <SelectItem value="mixed">Mixed</SelectItem>
             </SelectContent>
           </Select>
 
@@ -503,57 +512,74 @@ export default function TextInput() {
                   )}
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup
-                    value={selectedAnswers[index]}
-                    onValueChange={(value) =>
-                      setSelectedAnswers({
-                        ...selectedAnswers,
-                        [index]: value,
-                      })
-                    }
-                  >
-                    {question.answers.map((answer, ansIndex) => (
-                      <div
-                        key={ansIndex}
-                        className="flex items-center space-x-2"
-                      >
-                        {editingIndex === index ? (
-                          <>
-                            <input
-                              type="text"
-                              value={answer}
-                              onChange={(e) =>
-                                handleEditChange(
-                                  index,
-                                  `answers[${ansIndex}]`,
-                                  e.target.value
-                                )
-                              }
-                              className="w-full border border-gray-300 rounded px-3 py-2"
-                            />
-                            <input
-                              type="checkbox"
-                              checked={editingCorrectAnswer === answer}
-                              onChange={() =>
-                                handleCorrectAnswerSelection(index, answer)
-                              }
-                              className="h-6 w-6 checked:border-blue-500"
-                            />
-                          </>
-                        ) : (
-                          <>
-                            <RadioGroupItem
-                              value={answer}
-                              id={`q${index}-a${ansIndex}`}
-                            />
-                            <Label htmlFor={`q${index}-a${ansIndex}`}>
-                              {answer}
-                            </Label>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </RadioGroup>
+                  {question.type === 'short-answer' ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={selectedAnswers[index] || ''}
+                        onChange={(e) => 
+                          setSelectedAnswers({
+                            ...selectedAnswers,
+                            [index]: e.target.value
+                          })
+                        }
+                        className="w-full border border-gray-300 rounded px-3 py-2"
+                        placeholder="Type your answer here..."
+                      />
+                    </div>
+                  ) : (
+                    <RadioGroup
+                      value={selectedAnswers[index]}
+                      onValueChange={(value) =>
+                        setSelectedAnswers({
+                          ...selectedAnswers,
+                          [index]: value,
+                        })
+                      }
+                    >
+                      {question.answers.map((answer, ansIndex) => (
+                        <div
+                          key={ansIndex}
+                          className="flex items-center space-x-2"
+                        >
+                          {editingIndex === index ? (
+                            <>
+                              <input
+                                type="text"
+                                value={answer}
+                                onChange={(e) =>
+                                  handleEditChange(
+                                    index,
+                                    `answers[${ansIndex}]`,
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full border border-gray-300 rounded px-3 py-2"
+                              />
+                              <input
+                                type="checkbox"
+                                checked={editingCorrectAnswer === answer}
+                                onChange={() =>
+                                  handleCorrectAnswerSelection(index, answer)
+                                }
+                                className="h-6 w-6 checked:border-blue-500"
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <RadioGroupItem
+                                value={answer}
+                                id={`q${index}-a${ansIndex}`}
+                              />
+                              <Label htmlFor={`q${index}-a${ansIndex}`}>
+                                {answer}
+                              </Label>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  )}
                 </CardContent>
                 <CardFooter className="flex flex-col gap-2">
                   {editingIndex === index ? (
