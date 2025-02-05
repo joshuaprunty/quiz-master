@@ -17,13 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import SaveQuizModal from "./SaveQuizModal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import QuizConfigModal from "./QuizConfigModal";
 
 const COPY_TEXT =

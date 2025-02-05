@@ -1,6 +1,5 @@
 import Link from "next/link"
-import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu"
-import { cn } from "@/lib/utils"
+import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu"
 import { FaRegUserCircle } from "react-icons/fa"
 import {
   DropdownMenu,
@@ -10,7 +9,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
 
 export default function DashboardNavbar() {
   return (
@@ -22,7 +20,6 @@ export default function DashboardNavbar() {
               QuizWiz
             </Link>
           </div>
-
           <NavigationMenu className="ml-auto">
             <NavigationMenuList className="gap-6">
               <NavigationMenuItem>

@@ -6,18 +6,12 @@ import { Menu } from "lucide-react";
 import Link from "next/link";
 import DashboardNavbar from "@/components/DashboardNav";
 import { GoHome } from "react-icons/go";
-import { TbSettings } from "react-icons/tb";
 import { IoAddCircleOutline } from "react-icons/io5";
-import { FaRegUserCircle } from "react-icons/fa";
-import { MdFolderOpen } from "react-icons/md";
 import { usePathname } from "next/navigation";
 
 const navigationItems = [
   { href: "/dashboard", label: "Dashboard", icon: GoHome },
-  // { href: '/profile', label: 'Profile', icon: FaRegUserCircle },
-  // { href: '/usersettings', label: 'Settings', icon: TbSettings },
   { href: "/dashboard/create", label: "Create New", icon: IoAddCircleOutline },
-  // { href: "/dashboard/library", label: "Library", icon: MdFolderOpen },
 ];
 
 export default function AuthenticatedLayout({ children }) {

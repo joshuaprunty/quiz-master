@@ -16,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { slugify } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import RenameQuizModal from "@/components/RenameQuizModal";

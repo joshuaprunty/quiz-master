@@ -6,7 +6,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Reuse the same schema from questiongen
 const MCQuestion = z.object({
   type: z.literal('multiple-choice'),
   question: z.string(),
