@@ -541,7 +541,7 @@ export default function TextInput() {
         variant="outline"
         className="w-[100px]"
       >
-        Copy TEST
+        Copy Sample Input
       </Button>
       <Textarea
         placeholder="Paste your study materials here..."
