@@ -164,7 +164,8 @@ export default function TextInput() {
 
   const handleEditClick = (index) => {
     setEditingIndex(index);
-    setEditingCorrectAnswer(questions[index].correct_answer);
+    const question = questions[index];
+    setEditingCorrectAnswer(question.correct_answer);
   };
 
   const handleEditChange = (index, field, value) => {
@@ -197,23 +198,36 @@ export default function TextInput() {
   };
 
   const handleSaveEdit = () => {
-    if (!questions[editingIndex].answers.includes(editingCorrectAnswer)) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please select a correct answer before saving.",
-      });
-      return;
-    }
-
     const question = questions[editingIndex];
-    if (question.answers.some((answer) => !answer.trim())) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "All answer choices must be filled out before saving.",
-      });
-      return;
+    
+    if (question.type === 'short-answer') {
+      if (!editingCorrectAnswer?.trim()) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please enter a correct answer before saving.",
+        });
+        return;
+      }
+    } else {
+      // For multiple choice and true-false questions
+      if (!question.answers.includes(editingCorrectAnswer)) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please select a correct answer before saving.",
+        });
+        return;
+      }
+
+      if (question.answers.some((answer) => !answer.trim())) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "All answer choices must be filled out before saving.",
+        });
+        return;
+      }
     }
 
     setQuestions((prevQuestions) =>
@@ -344,7 +358,7 @@ export default function TextInput() {
 
     // Validate that all questions have non-empty answers
     for (const question of questions) {
-      if (question.answers.some((answer) => !answer.trim())) {
+      if (question.type !== 'short-answer' && question.answers.some((answer) => !answer.trim())) {
         toast({
           variant: "destructive",
           title: "Error",
@@ -512,73 +526,88 @@ export default function TextInput() {
                   )}
                 </CardHeader>
                 <CardContent>
-                  {question.type === 'short-answer' ? (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={selectedAnswers[index] || ''}
-                        onChange={(e) => 
+                  {editingIndex === index ? (
+                    question.type === 'short-answer' ? (
+                      <div className="space-y-2">
+                        <Label>Correct Answer</Label>
+                        <input
+                          type="text"
+                          value={editingCorrectAnswer || ''}
+                          onChange={(e) => setEditingCorrectAnswer(e.target.value)}
+                          className="w-full border border-gray-300 rounded px-3 py-2"
+                          placeholder="Enter correct answer..."
+                        />
+                      </div>
+                    ) : (
+                      <RadioGroup>
+                        {question.answers.map((answer, ansIndex) => (
+                          <div key={ansIndex} className="flex items-center space-x-2">
+                            <input
+                              type="text"
+                              value={answer}
+                              onChange={(e) =>
+                                handleEditChange(
+                                  index,
+                                  `answers[${ansIndex}]`,
+                                  e.target.value
+                                )
+                              }
+                              className="w-full border border-gray-300 rounded px-3 py-2"
+                            />
+                            <input
+                              type="checkbox"
+                              checked={editingCorrectAnswer === answer}
+                              onChange={() =>
+                                handleCorrectAnswerSelection(index, answer)
+                              }
+                              className="h-6 w-6 checked:border-blue-500"
+                            />
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    )
+                  ) : (
+                    question.type === 'short-answer' ? (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={selectedAnswers[index] || ''}
+                          onChange={(e) => 
+                            setSelectedAnswers({
+                              ...selectedAnswers,
+                              [index]: e.target.value
+                            })
+                          }
+                          className="w-full border border-gray-300 rounded px-3 py-2"
+                          placeholder="Type your answer here..."
+                        />
+                      </div>
+                    ) : (
+                      <RadioGroup
+                        value={selectedAnswers[index]}
+                        onValueChange={(value) =>
                           setSelectedAnswers({
                             ...selectedAnswers,
-                            [index]: e.target.value
+                            [index]: value,
                           })
                         }
-                        className="w-full border border-gray-300 rounded px-3 py-2"
-                        placeholder="Type your answer here..."
-                      />
-                    </div>
-                  ) : (
-                    <RadioGroup
-                      value={selectedAnswers[index]}
-                      onValueChange={(value) =>
-                        setSelectedAnswers({
-                          ...selectedAnswers,
-                          [index]: value,
-                        })
-                      }
-                    >
-                      {question.answers.map((answer, ansIndex) => (
-                        <div
-                          key={ansIndex}
-                          className="flex items-center space-x-2"
-                        >
-                          {editingIndex === index ? (
-                            <>
-                              <input
-                                type="text"
-                                value={answer}
-                                onChange={(e) =>
-                                  handleEditChange(
-                                    index,
-                                    `answers[${ansIndex}]`,
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full border border-gray-300 rounded px-3 py-2"
-                              />
-                              <input
-                                type="checkbox"
-                                checked={editingCorrectAnswer === answer}
-                                onChange={() =>
-                                  handleCorrectAnswerSelection(index, answer)
-                                }
-                                className="h-6 w-6 checked:border-blue-500"
-                              />
-                            </>
-                          ) : (
-                            <>
-                              <RadioGroupItem
-                                value={answer}
-                                id={`q${index}-a${ansIndex}`}
-                              />
-                              <Label htmlFor={`q${index}-a${ansIndex}`}>
-                                {answer}
-                              </Label>
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </RadioGroup>
+                      >
+                        {question.answers.map((answer, ansIndex) => (
+                          <div
+                            key={ansIndex}
+                            className="flex items-center space-x-2"
+                          >
+                            <RadioGroupItem
+                              value={answer}
+                              id={`q${index}-a${ansIndex}`}
+                            />
+                            <Label htmlFor={`q${index}-a${ansIndex}`}>
+                              {answer}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    )
                   )}
                 </CardContent>
                 <CardFooter className="flex flex-col gap-2">
