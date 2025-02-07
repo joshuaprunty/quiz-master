@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
+import QuestionViewCard from "@/components/questions/QuestionViewCard";
+import saveQuizResult from "@/firebase/firestore/saveQuizResult";
 
 export default function QuizPage({ params }) {
   const { quizname } = use(params);
@@ -204,21 +206,58 @@ export default function QuizPage({ params }) {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!quiz) return;
 
     const newCheckedAnswers = {};
     let correctCount = 0;
+    const questionResults = {};
 
     questions.forEach((question, index) => {
       const isCorrect = selectedAnswers[index] === question.correct_answer;
       newCheckedAnswers[index] = isCorrect;
       if (isCorrect) correctCount++;
+      
+      questionResults[`question_${index + 1}`] = {
+        question: question.question,
+        userAnswer: selectedAnswers[index],
+        correctAnswer: question.correct_answer,
+        result: isCorrect ? 'correct' : 'incorrect'
+      };
     });
 
     setCheckedAnswers(newCheckedAnswers);
     setScore(correctCount);
     setSubmitted(true);
+
+    // Save quiz results to Firestore
+    try {
+      const quizResultData = {
+        quizId: quiz.id,
+        quizTitle: quiz.title,
+        totalQuestions: questions.length,
+        correctAnswers: correctCount,
+        score: Math.round((correctCount / questions.length) * 100),
+        questions: questionResults
+      };
+
+      const { error } = await saveQuizResult(user.uid, quizResultData);
+      
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to save quiz results.",
+        });
+      }
+    } catch (err) {
+      console.error("Error saving quiz results:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save quiz results.",
+      });
+    }
   };
 
   const allQuestionsAnswered = questions.every(
@@ -254,6 +293,7 @@ export default function QuizPage({ params }) {
 
       <div className="mt-8 space-y-4">
         <div className="grid gap-6">
+          
           {questions.map((question, index) => (
             <Card
               key={index}

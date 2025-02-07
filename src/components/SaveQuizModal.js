@@ -5,18 +5,20 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DialogDescription } from "@radix-ui/react-dialog";
+import { Switch } from "@/components/ui/switch";
 
 export default function SaveQuizModal({ isOpen, onClose, onSave, loading }) {
   const [quizTitle, setQuizTitle] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(quizTitle);
+    onSave(quizTitle, isPublic);
   };
 
   return (
@@ -24,10 +26,10 @@ export default function SaveQuizModal({ isOpen, onClose, onSave, loading }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Save Quiz</DialogTitle>
+          <DialogDescription>
+            Enter a title for your quiz to save it.
+          </DialogDescription>
         </DialogHeader>
-        <DialogDescription>
-          Enter a title for your quiz to save it.
-        </DialogDescription>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -37,6 +39,15 @@ export default function SaveQuizModal({ isOpen, onClose, onSave, loading }) {
                 value={quizTitle}
                 onChange={(e) => setQuizTitle(e.target.value)}
                 placeholder="Enter quiz title..."
+                disabled={loading}
+              />
+            </div>
+            <div className="flex items-center justify-between space-x-2">
+              <Label htmlFor="public-toggle">Make quiz public</Label>
+              <Switch
+                id="public-toggle"
+                checked={isPublic}
+                onCheckedChange={setIsPublic}
                 disabled={loading}
               />
             </div>

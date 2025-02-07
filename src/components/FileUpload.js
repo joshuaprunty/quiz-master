@@ -189,7 +189,7 @@ export default function TextInput() {
     }
   };
 
-  const handleSaveQuiz = async (title) => {
+  const handleSaveQuiz = async (title, isPublic) => {
     if (!user) {
       toast({
         variant: "destructive",
@@ -201,7 +201,11 @@ export default function TextInput() {
 
     setIsSaving(true);
     try {
-      await saveQuiz(user.uid, { title, questions });
+      await saveQuiz(user.uid, { 
+        title, 
+        questions, 
+        public: isPublic 
+      });
       toast({
         title: "Success",
         description: "Quiz saved successfully!",
@@ -219,6 +223,8 @@ export default function TextInput() {
       setIsSaveModalOpen(false);
     }
   };
+
+  
 
   return (
     <div className="space-y-4 my-12 max-w-4xl">

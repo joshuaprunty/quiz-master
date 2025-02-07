@@ -7,6 +7,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import firebase_app from "../config";
+import { addPublicQuiz } from './publicQuizzes';
 
 const db = getFirestore(firebase_app);
 
@@ -29,6 +30,13 @@ export default async function saveQuiz(userId, quizData) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
+
+    if (quizData.public) {
+      await addPublicQuiz(userId, {
+        ...quizData,
+        originalQuizId: docRef.id
+      });
+    }
 
     result = { id: docRef.id };
   } catch (e) {
