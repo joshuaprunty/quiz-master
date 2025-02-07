@@ -30,6 +30,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { BsThreeDots } from 'react-icons/bs';
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 
 const COPY_TEXT =
 `
@@ -178,6 +180,8 @@ export default function TextInput() {
 
   const [hasAttempted, setHasAttempted] = useState({});
 
+  const [uiState, setUiState] = useState('initial'); // 'initial', 'topics', 'loading', 'questions'
+
   const handleEditClick = (index) => {
     setEditingIndex(index);
     const question = questions[index];
@@ -274,31 +278,28 @@ export default function TextInput() {
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: studyText }),
       });
 
       if (!response.ok) throw new Error("Analysis failed");
-
       const rawData = await response.json();
-
-      if (rawData.error) {
-        throw new Error(rawData.error);
-      }
 
       try {
         const parsedData = JSON.parse(rawData);
-        setTopics(parsedData.topics);
+        setTopics(parsedData.topics.map(topic => ({
+          ...topic,
+          priority: 1
+        })));
+        setUiState('topics');
       } catch (parseError) {
         console.error("Error parsing JSON:", parseError);
-        setTopics([
-          {
-            topic: "Response",
-            description: rawData,
-          },
-        ]);
+        setTopics([{
+          topic: "Response",
+          description: rawData,
+          priority: 1
+        }]);
+        setUiState('topics');
       }
     } catch (error) {
       console.error("Error analyzing text:", error);
@@ -307,42 +308,46 @@ export default function TextInput() {
     }
   };
 
-  const generateQuestions = async () => {
-    if (!studyText.trim()) {
+  const generateQuestions = async (config) => {
+    const enabledTopics = topics.filter(topic => topic.priority > 0);
+    
+    if (enabledTopics.length === 0) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter some text before generating questions.",
+        description: "Please enable at least one topic for the quiz.",
       });
       return;
     }
-  
-    setIsGenerating(true);
+
+    setIsConfigModalOpen(false);
+    setUiState('loading');
+    
     try {
       const response = await fetch("/api/questiongen", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           text: studyText,
-          config: questionConfig 
+          config: config,
+          topics: enabledTopics
         }),
       });
-  
+
       if (!response.ok) throw new Error("Question generation failed");
-  
       const data = await response.json();
-      if (data.error) {
-        throw new Error(data.error);
-      }
       setQuestions(data);
       setSelectedAnswers({});
       setCheckedAnswers({});
+      setUiState('questions');
     } catch (error) {
       console.error("Error generating questions:", error);
-    } finally {
-      setIsGenerating(false);
+      setUiState('topics'); // Return to topics view on error
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate questions. Please try again.",
+      });
     }
   };
 
@@ -636,6 +641,22 @@ export default function TextInput() {
     multiple: false
   });
 
+  const handleTopicToggle = (index, enabled) => {
+    setTopics(prevTopics => 
+      prevTopics.map((topic, i) => 
+        i === index ? { ...topic, priority: enabled ? 1 : 0 } : topic
+      )
+    );
+  };
+
+  const handlePriorityChange = (index, value) => {
+    setTopics(prevTopics => 
+      prevTopics.map((topic, i) => 
+        i === index ? { ...topic, priority: value } : topic
+      )
+    );
+  };
+
   return (
     <div className="space-y-4 my-12 max-w-4xl">
       <Button 
@@ -703,48 +724,71 @@ export default function TextInput() {
 
       <div className="flex gap-4">
         <Button 
-          variant="outline" 
-          onClick={() => setIsConfigModalOpen(true)}
-          className="w-1/3"
-        >
-          Configure Questions
-        </Button>
-        <Button 
-          onClick={generateQuestions}
-          disabled={isGenerating}
-          className="w-1/3"
-        >
-          {isGenerating ? "Generating..." : "Generate Questions"}
-        </Button>
-        <Button 
           onClick={analyzeText} 
-          className="w-1/3" 
-          disabled={isAnalyzing}
+          className="w-full" 
+          disabled={isAnalyzing || !studyText.trim() || uiState === 'loading'}
         >
           {isAnalyzing ? "Analyzing..." : "Analyze Topics"}
         </Button>
       </div>
-      <QuizConfigModal 
-        isOpen={isConfigModalOpen}
-        onClose={() => setIsConfigModalOpen(false)}
-        onSave={setQuestionConfig}
-      />
 
-      {topics && (
-        <div className="mt-8 space-y-4">
-          <h2 className="text-xl font-bold">Main Topics Identified:</h2>
+      {uiState === 'topics' && (
+        <div className="mt-8 space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold">Main Topics Identified:</h2>
+            <Button 
+              variant="outline"
+              onClick={() => setIsConfigModalOpen(true)}
+              disabled={!topics.some(topic => topic.priority > 0)}
+            >
+              Next: Configure Questions
+            </Button>
+          </div>
           <div className="grid gap-4">
             {topics.map((topic, index) => (
-              <div key={index} className="border rounded-lg p-4">
-                <h3 className="font-semibold">{topic.topic}</h3>
-                <p className="text-gray-600 mt-2">{topic.description}</p>
+              <div key={index} className="border rounded-lg p-4 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold">{topic.topic}</h3>
+                    <p className="text-gray-600 mt-2">{topic.description}</p>
+                  </div>
+                  <Switch
+                    checked={topic.priority > 0}
+                    onCheckedChange={(checked) => handleTopicToggle(index, checked)}
+                  />
+                </div>
+                
+                {topic.priority > 0 && (
+                  <div className="space-y-2">
+                    <Label>Priority Level</Label>
+                    <Slider
+                      value={[topic.priority]}
+                      onValueChange={(value) => handlePriorityChange(index, value[0])}
+                      min={1}
+                      max={5}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Low</span>
+                      <span>High</span>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {questions && (
+      {uiState === 'loading' && (
+        <div className="flex flex-col items-center justify-center space-y-4 mt-8">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-lg font-medium">Generating your quiz...</p>
+        </div>
+      )}
+
+      {uiState === 'questions' && questions && (
         <div className="mt-8 space-y-4">
           <h2 className="text-xl font-bold">Practice Questions:</h2>
           <div className="grid gap-6">
@@ -949,6 +993,13 @@ export default function TextInput() {
           </Button>
         </div>
       )}
+
+      <QuizConfigModal 
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        onSave={generateQuestions}
+        enabledTopicCount={topics?.filter(topic => topic.priority > 0).length || 0}
+      />
 
       <SaveQuizModal
         isOpen={isSaveModalOpen}
