@@ -40,7 +40,7 @@ export default function Home() {
 
       <Section backgroundColor="#ffffff">
         <div className="py-24 w-full">
-          <h2 className="text-3xl font-bold mb-12">First Section</h2>
+          <h2 className="text-4xl font-semibold mb-12 text-center">Transform your Learning with AI-Powered Tools</h2>
           <Carousel 
             className="mx-auto"
             opts={{
@@ -86,13 +86,17 @@ export default function Home() {
 
       <Section backgroundColor="#f6f7fb" className="flex items-center">
         <div className="py-16">
-          <h2 className="text-3xl font-bold mb-12">Second Section</h2>
+          <h2 className="text-4xl font-semibold mb-8 text-center">Versatile Quiz Creation for Every Need</h2>
+          <p className="text-lg text-muted-foreground mb-12 text-center max-w-3xl mx-auto">
+            From multiple choice to open-ended responses, support for various learning materials and assessment styles.
+          </p>
+          
           <Card className="w-full mx-auto my-12">
             <div className="grid grid-cols-1 md:grid-cols-2">
               <div className="relative h-[300px] md:h-full">
                 <Image
                   src="/studying.jpg"
-                  alt="Students studying"
+                  alt="Multiple choice quiz example"
                   fill
                   className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
                 />
@@ -100,65 +104,61 @@ export default function Home() {
               <div className="p-6 flex flex-col justify-center min-h-[30vh]">
                 <div>
                   <CardHeader className="p-0 mb-4">
-                    <CardTitle className="text-2xl">Card Title</CardTitle>
-                    <CardDescription>This is a brief description of the card content.</CardDescription>
+                    <CardTitle className="text-2xl">Diverse Question Types</CardTitle>
+                    <CardDescription>Create engaging assessments with various question formats</CardDescription>
                   </CardHeader>
                   
                   <CardContent className="p-0">
                     <p className="text-gray-600">
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-                      Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                      Support for multiple-choice, true/false, short answer, and essay questions. 
+                      Customize your quizzes to match your teaching style and learning objectives.
                     </p>
                   </CardContent>
                 </div>
                 <CardFooter className="p-0 mt-4">
-                  <Button className="w-full">Learn More</Button>
+                  <Button className="w-full">Explore Question Types</Button>
                 </CardFooter>
               </div>
             </div>
           </Card>
+
           <Card className="w-full mx-auto my-12 overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-2">
               <div className="p-6 flex flex-col justify-center min-h-[30vh]">
                 <div>
                   <CardHeader className="p-0 mb-4">
-                    <CardTitle className="text-2xl">Card Title</CardTitle>
-                    <CardDescription>This is a brief description of the card content.</CardDescription>
+                    <CardTitle className="text-2xl">Flexible Input Options</CardTitle>
+                    <CardDescription>Transform any learning material into a quiz</CardDescription>
                   </CardHeader>
                   
                   <CardContent className="p-0">
                     <p className="text-gray-600">
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-                      Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                      Upload PDFs, paste text, or link to web content. Our AI adapts to your 
+                      source material, making quiz creation effortless regardless of format.
                     </p>
                   </CardContent>
                 </div>
                 <CardFooter className="p-0 mt-4">
-                  <Button className="w-full">Learn More</Button>
+                  <Button className="w-full">View Supported Formats</Button>
                 </CardFooter>
               </div>
               <div className="relative h-[300px] md:h-full">
                 <Image
                   src="/studying.jpg"
-                  alt="Students studying"
+                  alt="Document types illustration"
                   fill
                   className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
                 />
               </div>
             </div>
           </Card>
-        </div>
-      </Section>
 
-      <Section backgroundColor="#ffffff" className="flex items-center">
-        <div className="py-24">
-          <h2 className="text-3xl font-bold mb-12">Third Section</h2>
-          <Card className="w-full mx-auto">
+          <Card className="w-full mx-auto my-12">
             <div className="grid grid-cols-1 md:grid-cols-2">
               <div className="relative h-[300px] md:h-full">
                 <Image
                   src="/studying.jpg"
-                  alt="Students studying"
+                  alt="Quiz customization interface"
                   fill
                   className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
                 />
@@ -166,18 +166,19 @@ export default function Home() {
               <div className="p-6 flex flex-col justify-center min-h-[30vh]">
                 <div>
                   <CardHeader className="p-0 mb-4">
-                    <CardTitle className="text-2xl">Card Title</CardTitle>
-                    <CardDescription>This is a brief description of the card content.</CardDescription>
+                    <CardTitle className="text-2xl">Customizable Quiz Structure</CardTitle>
+                    <CardDescription>Design assessments that match your needs</CardDescription>
                   </CardHeader>
+                  
                   <CardContent className="p-0">
                     <p className="text-gray-600">
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-                      Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                      Set quiz length, difficulty levels, and topic focus. Add time limits, 
+                      randomize questions, and include explanations for comprehensive learning.
                     </p>
                   </CardContent>
                 </div>
                 <CardFooter className="p-0 mt-4">
-                  <Button className="w-full">Learn More</Button>
+                  <Button className="w-full">See Customization Options</Button>
                 </CardFooter>
               </div>
             </div>

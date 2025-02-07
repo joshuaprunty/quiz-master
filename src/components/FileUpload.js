@@ -11,13 +11,25 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Toaster } from "@/components/ui/toaster";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthContext } from "@/context/AuthContext";
 import saveQuiz from "@/firebase/firestore/saveQuiz";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useDropzone } from 'react-dropzone';
 import SaveQuizModal from "./SaveQuizModal";
 import QuizConfigModal from "./QuizConfigModal";
+import { RiSparkling2Fill } from "react-icons/ri";
+import { FaRegTrashAlt } from "react-icons/fa";
+import { FaRegEdit } from "react-icons/fa";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { BsThreeDots } from 'react-icons/bs';
 
 const COPY_TEXT =
 `
@@ -161,6 +173,10 @@ export default function TextInput() {
 
   // Add state for storing previous questions during regeneration
   const [pendingRegeneration, setPendingRegeneration] = useState({});
+
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const [hasAttempted, setHasAttempted] = useState({});
 
   const handleEditClick = (index) => {
     setEditingIndex(index);
@@ -330,22 +346,12 @@ export default function TextInput() {
     }
   };
 
-  const checkAnswer = (questionIndex) => {
-    const question = questions[questionIndex];
-    let isCorrect;
-    
-    if (question.type === 'short-answer') {
-      const userAnswer = (selectedAnswers[questionIndex] || '').toLowerCase().trim();
-      const correctAnswer = question.correct_answer.toLowerCase().trim();
-      isCorrect = userAnswer === correctAnswer;
-    } else {
-      isCorrect = selectedAnswers[questionIndex] === question.correct_answer;
+  const checkAnswer = (index) => {
+    setHasAttempted(prev => ({ ...prev, [index]: true }));
+    const isCorrect = selectedAnswers[index] === questions[index].correct_answer;
+    if (isCorrect) {
+      setCheckedAnswers(prev => ({ ...prev, [index]: true }));
     }
-    
-    setCheckedAnswers({
-      ...checkedAnswers,
-      [questionIndex]: isCorrect,
-    });
   };
 
   const handleSaveQuiz = async (title) => {
@@ -534,6 +540,102 @@ export default function TextInput() {
     });
   };
 
+  const onDrop = useCallback(async (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    
+    // Validate file type
+    if (!file.type.match('application/pdf|text/plain|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
+      toast({
+        variant: "destructive",
+        title: "Invalid file type",
+        description: "Please upload a PDF, TXT, or Word document.",
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Please upload a file smaller than 5MB.",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // For text files, we can read directly
+      if (file.type === 'text/plain') {
+        const text = await file.text();
+        setStudyText(text);
+        toast({
+          title: "Success",
+          description: "File content loaded successfully.",
+        });
+      } else {
+        // For PDFs and Word docs, we'll need to send to backend
+        const formData = new FormData();
+        formData.append('file', file);
+
+        console.log('Attempting to upload file:', {
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size
+        });
+
+        const response = await fetch("/api/extract-text", {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          console.error('Server response:', {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+          });
+          
+          const errorData = await response.text();
+          console.error('Error response body:', errorData);
+          
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setStudyText(data.text);
+        toast({
+          title: "Success",
+          description: "File processed successfully.",
+        });
+      }
+    } catch (error) {
+      console.error('Error processing file:', {
+        error: error.message,
+        stack: error.stack
+      });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to process file. Please try again.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [toast, setStudyText]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'text/plain': ['.txt'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+    },
+    multiple: false
+  });
+
   return (
     <div className="space-y-4 my-12 max-w-4xl">
       <Button 
@@ -543,12 +645,62 @@ export default function TextInput() {
       >
         Copy Sample Input
       </Button>
-      <Textarea
-        placeholder="Paste your study materials here..."
-        className="min-h-[300px]"
-        value={studyText}
-        onChange={(e) => setStudyText(e.target.value)}
-      />
+
+      <Tabs defaultValue="text" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="text">Text Input</TabsTrigger>
+          <TabsTrigger value="upload">File Upload</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="text" className="mt-6">
+          <Textarea
+            placeholder="Paste your study materials here..."
+            className="min-h-[300px]"
+            value={studyText}
+            onChange={(e) => setStudyText(e.target.value)}
+          />
+        </TabsContent>
+        
+        <TabsContent value="upload" className="mt-6">
+          <div
+            {...getRootProps()}
+            className={`
+              min-h-[300px] 
+              border-2 
+              border-dashed 
+              border-gray-300 
+              rounded-lg 
+              flex 
+              items-center 
+              justify-center 
+              bg-muted/50
+              transition-colors
+              cursor-pointer
+              ${isDragActive ? 'border-primary bg-primary/5' : ''}
+              ${isProcessing ? 'pointer-events-none opacity-50' : ''}
+            `}
+          >
+            <input {...getInputProps()} />
+            <div className="text-center p-6">
+              {isProcessing ? (
+                <p className="text-muted-foreground">Processing file...</p>
+              ) : isDragActive ? (
+                <p className="text-primary">Drop your file here</p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">
+                    Drag and drop your file here, or click to select
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Supported formats: PDF, TXT, DOC, DOCX (Max 5MB)
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
       <div className="flex gap-4">
         <Button 
           variant="outline" 
@@ -599,60 +751,64 @@ export default function TextInput() {
             {questions.map((question, index) => (
               <Card key={index} className="w-full">
                 <CardHeader>
-                  <div className="flex flex-row justify-between items-center">
+                  <div className="flex flex-row justify-between items-start">
                     <h3 className="font-semibold text-lg">
-                      Question {index + 1}
+                      {index + 1}. {question.question}
                     </h3>
-                    <div className="flex gap-2">
-                      {pendingRegeneration[index] ? (
-                        <>
-                          <Button
-                            onClick={() => handleAcceptRegeneration(index)}
-                            variant="save"
-                            size="sm"
+                    {pendingRegeneration[index] ? (
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          onClick={() => handleAcceptRegeneration(index)}
+                          variant="save"
+                          className="w-[100px]"
+                        >
+                          Keep New
+                        </Button>
+                        <Button
+                          onClick={() => handleRevertRegeneration(index)}
+                          variant="outline"
+                          className="w-[100px]"
+                        >
+                          Revert
+                        </Button>
+                      </div>
+                    ) : (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            className="h-8 w-8 p-0"
                           >
-                            Keep New
+                            <BsThreeDots className="h-4 w-4" />
                           </Button>
-                          <Button
-                            onClick={() => handleRevertRegeneration(index)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            Revert
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
                             onClick={() => handleRegenerateQuestion(index)}
-                            variant="outline"
-                            size="sm"
                             disabled={loadingStates[index]}
+                            className="flex items-center"
                           >
-                            {loadingStates[index] ? "Regenerating..." : "Regenerate"}
-                          </Button>
-                          <Button
+                            <RiSparkling2Fill className="w-4 h-4 mr-2" />
+                            <span>{loadingStates[index] ? "Regenerating..." : "Regenerate"}</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleEditClick(index)}
+                            className="flex items-center"
+                          >
+                            <FaRegEdit className="w-4 h-4 mr-2" />
+                            <span>Edit</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
                             onClick={() => handleDeleteQuestion(index)}
-                            variant="destructive"
+                            className="flex items-center text-red-600"
                           >
-                            Delete
-                          </Button>
-                        </>
-                      )}
-                    </div>
+                            <FaRegTrashAlt className="w-4 h-4 mr-2" />
+                            <span>Delete</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
-                  {editingIndex === index ? (
-                    <input
-                      type="text"
-                      value={question.question}
-                      onChange={(e) =>
-                        handleEditChange(index, "question", e.target.value)
-                      }
-                      className="w-full border border-gray-300 rounded px-3 py-2"
-                    />
-                  ) : (
-                    <p>{question.question}</p>
-                  )}
                 </CardHeader>
                 <CardContent>
                   {editingIndex === index ? (
@@ -745,65 +901,41 @@ export default function TextInput() {
                       Save
                     </Button>
                   ) : (
-                    <div className="flex flex-row justify-between items-center w-full">
-                      <div className="flex flex-row items-center gap-4">
-                        <Button
-                          onClick={() => checkAnswer(index)}
-                          disabled={!selectedAnswers[index]}
-                        >
-                          Check Answer
-                        </Button>
-                        {checkedAnswers[index] !== undefined && (
-                          <p
-                            className={
-                              checkedAnswers[index]
-                                ? "text-green-600"
-                                : "text-red-600"
-                            }
-                          >
-                            {checkedAnswers[index] ? "Correct!" : "Incorrect"}
-                          </p>
-                        )}
-                      </div>
+                    <div className="flex flex-row items-center gap-4 justify-start w-full">
                       <Button
-                        onClick={() => handleEditClick(index)}
-                        variant="edit"
+                        onClick={() => checkAnswer(index)}
+                        disabled={!selectedAnswers[index]}
+                        variant={checkedAnswers[index] ? "save" : "default"}
+                        className={checkedAnswers[index] ? "w-[100px]" : ""}
                       >
-                        Edit
+                        {checkedAnswers[index] ? "Correct!" : "Check Answer"}
                       </Button>
+                      
+                      {selectedAnswers[index] && checkedAnswers[index] && (
+                        <Button
+                          onClick={() => setExplanationVisible((prev) => ({
+                            ...prev,
+                            [index]: !prev[index],
+                          }))}
+                        >
+                          {explanationVisible[index] ? "Hide Explanation" : "View Explanation"}
+                        </Button>
+                      )}
+                      
+                      {selectedAnswers[index] && !checkedAnswers[index] && hasAttempted[index] && (
+                        <p className="text-red-600">
+                          Incorrect
+                        </p>
+                      )}
                     </div>
                   )}
-                  {/* Row with the Explanation Button */}
-                  <div className="mt-2">
-                    <Button
-                      onClick={() => {
-                        if (!selectedAnswers[index]) {
-                          toast({
-                            variant: "destructive",
-                            title: "Error",
-                            description:
-                              "Please answer the question first to view the explanation.",
-                          });
-                          return;
-                        }
-                        setExplanationVisible((prev) => ({
-                          ...prev,
-                          [index]: !prev[index],
-                        }));
-                      }}
-                    >
-                      {explanationVisible[index]
-                        ? "Hide Explanation"
-                        : "View Explanation"}
-                    </Button>
 
-                    {/* Explanation Box */}
-                    {explanationVisible[index] && (
-                      <div className="mt-2 p-3 bg-gray-100 rounded-lg">
-                        <p>{question.explanation}</p>
-                      </div>
-                    )}
-                  </div>
+                  {/* Explanation Box */}
+                  {explanationVisible[index] && (
+                    <div className="mt-2 p-3 bg-gray-100 rounded-lg">
+                      <p>{question.explanation}</p>
+                    </div>
+                  )}
                 </CardFooter>
               </Card>
             ))}

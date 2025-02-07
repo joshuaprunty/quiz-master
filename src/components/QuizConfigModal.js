@@ -11,9 +11,9 @@ import { useState } from "react";
 
 export default function QuizConfigModal({ isOpen, onClose, onSave }) {
   const [config, setConfig] = useState({
-    'multiple-choice': 4,
-    'true-false': 2,
-    'short-answer': 2
+    'multiple-choice': 1,
+    'true-false': 1,
+    'short-answer': 1
   });
 
   const adjustCount = (type, increment) => {
