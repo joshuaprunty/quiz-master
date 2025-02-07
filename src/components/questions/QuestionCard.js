@@ -17,10 +17,10 @@ import {
 import { BsThreeDots } from 'react-icons/bs';
 import { RiSparkling2Fill } from "react-icons/ri";
 import { FaRegTrashAlt, FaRegEdit } from "react-icons/fa";
-import QuestionActions from "@/components/QuestionActions";
-import QuestionAnswerForm from "@/components/QuestionAnswerForm";
-import QuestionEditForm from "@/components/QuestionEditForm";
-import QuestionFooter from "@/components/QuestionFooter";
+import QuestionActions from "@/components/questions/QuestionActions";
+import QuestionAnswerForm from "@/components/questions/QuestionAnswerForm";
+import QuestionEditForm from "@/components/questions/QuestionEditForm";
+import QuestionFooter from "@/components/questions/QuestionFooter";
 
 export default function QuestionCard({
   question,

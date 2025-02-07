@@ -9,7 +9,7 @@ import { storage } from "@/firebase/config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
-import UserProfileForm from "@/components/UserProfileForm";
+import UserProfileForm from "@/components/auth/UserProfileForm";
 import { useRouter } from "next/navigation";
 import logout from "@/firebase/auth/logout";
 

@@ -34,7 +34,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { useQuestionState } from "@/hooks/useQuestionState";
 import { analyzeText, generateQuestions } from "@/services/quizService";
-import QuestionCard from "@/components/QuestionCard";
+import QuestionCard from "@/components/questions/QuestionCard";
 import TopicCard from "@/components/TopicCard";
 import { COPY_TEXT } from "@/lib/utils";
 
