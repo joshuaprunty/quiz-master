@@ -641,7 +641,7 @@ export default function TextInput() {
       <Button 
         onClick={copyTest}
         variant="outline"
-        className="w-[100px]"
+        className="fixed bottom-8 right-8 z-50 shadow-md hover:shadow-lg transition-shadow px-6"
       >
         Copy Sample Input
       </Button>

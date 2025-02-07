@@ -6,6 +6,8 @@ import getUserQuizzes from "@/firebase/firestore/getUserQuizzes";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TbSettings } from "react-icons/tb";
+import { MdChecklist } from "react-icons/md";
+
 
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -122,38 +124,34 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold my-2">Dashboard</h1>
-      <p className="my-2">Welcome to your dashboard!</p>
-      <Link href="/dashboard/create">
-        <Button className="w-full max-w-7xl my-2">+ Create Quiz</Button>
-      </Link>
+      {/* <p className="my-2">Welcome to your dashboard!</p> */}
+
       <Separator className="my-6 max-w-7xl" />
+      <h2 className="text-xl font-semibold my-4">Your Quizzes</h2>
       {quizzes.length === 0 ? (
         <p className="text-center text-gray-500">
           No quizzes created yet. Create your first quiz!
         </p>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-7xl">
           {quizzes.map((quiz) => (
             <Card key={quiz.id} className="w-full">
-              <div className="grid grid-cols-1 md:grid-cols-2">
-                <div className="relative h-[200px] md:h-full">
-                  <Image
-                    src="/studying.jpg"
-                    alt="Quiz thumbnail"
-                    fill
-                    className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
-                  />
+              <div className="flex flex-row">
+                <div className="relative flex items-center px-6 justify-center">
+                  <MdChecklist className="h-12 w-12" />
                 </div>
-                <div className="p-6 flex flex-col justify-center">
-                  <CardHeader className="p-0 mb-4">
-                    {/* <CardTitle className="text-2xl break-words hyphens-auto overflow-wrap-anywhere">{quiz.title}</CardTitle> */}
-                    <CardTitle className="text-2xl whitespace-nowrap overflow-hidden text-ellipsis">
+                <div className="flex flex-col justify-center w-full">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xl whitespace-nowrap overflow-hidden text-ellipsis">
                       {quiz.title}
                     </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {quiz.questions?.length || 0} questions
+                    </p>
                   </CardHeader>
-                  <CardFooter className="p-0 mt-4 flex gap-2">
+                  <CardFooter className="flex gap-2 pt-2">
                     <Link
                       href={`/dashboard/${formatTitle(quiz.title)}`}
                       className="flex-1"
@@ -185,6 +183,9 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+      <Link href="/dashboard/create">
+        <Button className="w-full max-w-7xl my-6">+ Create New</Button>
+      </Link>
 
       <DeleteQuizModal
         isOpen={deleteModalOpen}
