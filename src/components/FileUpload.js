@@ -37,6 +37,7 @@ import { analyzeText, generateQuestions } from "@/services/quizService";
 import QuestionCard from "@/components/questions/QuestionCard";
 import TopicCard from "@/components/TopicCard";
 import { COPY_TEXT } from "@/lib/utils";
+import TopicEditor from "@/components/TopicEditor";
 
 
 export default function TextInput() {
@@ -71,6 +72,8 @@ export default function TextInput() {
     pendingRegeneration,
     setPendingRegeneration,
   } = useQuestionState();
+
+  const [isAddingTopic, setIsAddingTopic] = useState(false);
 
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
@@ -288,7 +291,24 @@ export default function TextInput() {
                 onPriorityChange={handlePriorityChange}
               />
             ))}
+            {isAddingTopic && (
+              <TopicEditor
+                onSave={(newTopic) => {
+                  setTopics(prev => [...prev, newTopic]);
+                  setIsAddingTopic(false);
+                }}
+                onCancel={() => setIsAddingTopic(false)}
+              />
+            )}
           </div>
+          <Button
+            variant="outline"
+            onClick={() => setIsAddingTopic(true)}
+            className="w-full"
+            disabled={isAddingTopic}
+          >
+            + Add Custom Topic
+          </Button>
         </div>
       )}
 

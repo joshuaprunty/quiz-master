@@ -17,8 +17,8 @@ export default function TopicCard({ topic, index, onTopicToggle, onPriorityChang
       </div>
       
       {topic.priority > 0 && (
-        <div className="space-y-2">
-          <Label>Priority Level</Label>
+        <div className="space-y-2 w-3/5">
+          <Label>Priority</Label>
           <Slider
             value={[topic.priority]}
             onValueChange={(value) => onPriorityChange(index, value[0])}
