@@ -72,7 +72,7 @@ export default function AuthenticatedLayout({ children }) {
               </Link>
             );
           })}
-          <Link
+          {/* <Link
             key="folders"
             href="/dashboard/folders"
             className={`text-lg flex items-center gap-2 rounded-md px-2 py-1 ${
@@ -85,7 +85,7 @@ export default function AuthenticatedLayout({ children }) {
               }`}
             />
             Folders
-          </Link>
+          </Link> */}
         </nav>
       </div>
       {/* Main Content */}
