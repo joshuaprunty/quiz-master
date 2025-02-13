@@ -35,10 +35,33 @@ const ResponseSchema = z.object({
   questions: z.array(Question)
 });
 
-export async function POST(request) {
-  try {
-    const { text, config } = await request.json();
+export async function POST(req) {
+  const { text, config, topics } = await req.json();
+  
+  // Calculate question distribution based on priorities
+  const totalPriority = topics.reduce((sum, t) => sum + t.priority, 0);
+  const totalQuestions = Object.values(config).reduce((sum, count) => sum + count, 0);
+  
+  // Distribute questions proportionally
+  const topicDistribution = topics.map(topic => ({
+    topic: topic.topic,
+    questionCount: Math.round((topic.priority / totalPriority) * totalQuestions)
+  }));
+
+  // Generate prompt with topic-specific instructions
+  const prompt = `Generate a quiz with the following specifications:
+    ${topicDistribution.map(t => 
+      `- ${t.questionCount} questions about "${t.topic}"`
+    ).join('\n')}
     
+    The questions should be distributed as follows:
+    ${Object.entries(config).map(([type, count]) =>
+      `- ${count} ${type} questions`
+    ).join('\n')}
+    
+    Source material: ${text}`;
+
+  try {
     const systemPrompt = `You are a helpful teaching assistant. Analyze the provided study materials and generate questions according to the following configuration:
 
     ${config['multiple-choice']} multiple choice questions in this format:
@@ -71,7 +94,7 @@ export async function POST(request) {
       model: "gpt-4o-2024-08-06",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: text },
+        { role: "user", content: prompt },
       ],
       response_format: zodResponseFormat(ResponseSchema, "questions"),
     });

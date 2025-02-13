@@ -8,10 +8,13 @@ import DashboardNavbar from "@/components/DashboardNav";
 import { GoHome } from "react-icons/go";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { usePathname } from "next/navigation";
+import { IoMdFolderOpen } from "react-icons/io";
+import { IoMdStats } from "react-icons/io";
 
 const navigationItems = [
   { href: "/dashboard", label: "Dashboard", icon: GoHome },
   { href: "/dashboard/create", label: "Create New", icon: IoAddCircleOutline },
+  { href: "/dashboard/scores", label: "Scores", icon: IoMdStats },
 ];
 
 export default function AuthenticatedLayout({ children }) {
@@ -70,6 +73,20 @@ export default function AuthenticatedLayout({ children }) {
               </Link>
             );
           })}
+          {/* <Link
+            key="folders"
+            href="/dashboard/folders"
+            className={`text-lg flex items-center gap-2 rounded-md px-2 py-1 ${
+              pathname === "/dashboard/folders" ? "bg-blue-50 text-blue-700" : ""
+            }`}
+          >
+            <IoMdFolderOpen
+              className={`h-6 w-6 ${
+                pathname === "/dashboard/folders" ? "text-blue-700" : ""
+              }`}
+            />
+            Folders
+          </Link> */}
         </nav>
       </div>
       {/* Main Content */}

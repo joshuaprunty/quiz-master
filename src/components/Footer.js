@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { FaGithub } from "react-icons/fa";
+
 
 export default function Footer() {
   return (
@@ -101,15 +103,9 @@ export default function Footer() {
               <div className="text-sm text-muted-foreground">
                 © 2025 QuizWiz. All rights reserved.
               </div>
-              <div className="flex space-x-6 mt-4 md:mt-0">
-                <a href="https://twitter.com" className="text-muted-foreground hover:text-primary">
-                  Twitter
-                </a>
-                <a href="https://github.com" className="text-muted-foreground hover:text-primary">
-                  GitHub
-                </a>
-                <a href="https://linkedin.com" className="text-muted-foreground hover:text-primary">
-                  LinkedIn
+              <div className="flex space-x-6 mt-4 md:mt-0 items-center">
+                <a href="https://github.com" className="text-muted-foreground hover:text-primary flex items-center">
+                  <FaGithub className="mr-2" /> GitHub
                 </a>
               </div>
             </div>

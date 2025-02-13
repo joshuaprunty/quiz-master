@@ -1,19 +1,19 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { DialogDescription } from "@radix-ui/react-dialog";
-import { useState } from "react";
 
-export default function QuizConfigModal({ isOpen, onClose, onSave }) {
+export default function QuizConfigModal({ isOpen, onClose, onSave, enabledTopicCount }) {
   const [config, setConfig] = useState({
-    'multiple-choice': 4,
-    'true-false': 2,
-    'short-answer': 2
+    'multiple-choice': 1,
+    'true-false': 1,
+    'short-answer': 1
   });
 
   const adjustCount = (type, increment) => {
@@ -26,21 +26,23 @@ export default function QuizConfigModal({ isOpen, onClose, onSave }) {
   const handleSave = () => {
     const total = Object.values(config).reduce((sum, count) => sum + count, 0);
     if (total === 0) {
-      return; // Maybe show an error toast
+      return;
     }
     onSave(config);
     onClose();
   };
+
+  const totalQuestions = Object.values(config).reduce((sum, count) => sum + count, 0);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Configure Quiz Questions</DialogTitle>
+          <DialogDescription>
+            Set the number of each type of question for your quiz. Questions will be distributed across {enabledTopicCount} enabled topics based on their priority levels.
+          </DialogDescription>
         </DialogHeader>
-        <DialogDescription>
-          Set the number of each type of question you want in your quiz.
-        </DialogDescription>
 
         <div className="space-y-4 py-4">
           {Object.entries(config).map(([type, count]) => (
@@ -51,6 +53,7 @@ export default function QuizConfigModal({ isOpen, onClose, onSave }) {
                   variant="outline" 
                   size="sm"
                   onClick={() => adjustCount(type, -1)}
+                  disabled={count === 0}
                 >
                   -
                 </Button>
@@ -65,14 +68,23 @@ export default function QuizConfigModal({ isOpen, onClose, onSave }) {
               </div>
             </div>
           ))}
+          
+          <div className="pt-2 border-t">
+            <p className="text-sm text-muted-foreground">
+              Total Questions: {totalQuestions}
+            </p>
+          </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>
-            Save Configuration
+          <Button 
+            onClick={handleSave}
+            disabled={totalQuestions === 0}
+          >
+            Generate Quiz
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -3,9 +3,12 @@ import DeleteQuizModal from "@/components/DeleteQuizModal";
 import { useAuthContext } from "@/context/AuthContext";
 import deleteQuiz from "@/firebase/firestore/deleteQuiz";
 import getUserQuizzes from "@/firebase/firestore/getUserQuizzes";
+import { getPublicQuizzes } from "@/firebase/firestore/publicQuizzes";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TbSettings } from "react-icons/tb";
+import { MdChecklist } from "react-icons/md";
+
 
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,16 +24,19 @@ import Link from "next/link";
 import RenameQuizModal from "@/components/RenameQuizModal";
 import { useToast } from "@/hooks/use-toast";
 import updateQuiz from "@/firebase/firestore/updateQuiz";
+import QuizOptionsModal from "@/components/QuizOptionsModal";
 
 export default function Dashboard() {
   const { user } = useAuthContext();
   const router = useRouter();
   const [quizzes, setQuizzes] = useState([]);
+  const [publicQuizzes, setPublicQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [quizToRename, setQuizToRename] = useState(null);
+  const [quizForOptions, setQuizForOptions] = useState(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,12 +46,24 @@ export default function Dashboard() {
     }
 
     const fetchQuizzes = async () => {
-      const { result, error } = await getUserQuizzes(user.uid);
-      if (error) {
-        console.error("Error fetching quizzes:", error);
+      // Fetch user's quizzes
+      const { result: userQuizzes, error: userError } = await getUserQuizzes(user.uid);
+      if (userError) {
+        console.error("Error fetching user quizzes:", userError);
         return;
       }
-      setQuizzes(result);
+      setQuizzes(userQuizzes);
+
+      // Fetch public quizzes
+      const { result: publicQuizzes, error: publicError } = await getPublicQuizzes();
+      if (publicError) {
+        console.error("Error fetching public quizzes:", publicError);
+        return;
+      }
+      // Filter out user's own quizzes from public quizzes
+      const filteredPublicQuizzes = publicQuizzes.filter(quiz => quiz.userId !== user.uid);
+      setPublicQuizzes(filteredPublicQuizzes);
+
       setLoading(false);
     };
 
@@ -112,6 +130,38 @@ export default function Dashboard() {
     }
   };
 
+  const handleOptionsUpdate = async (options) => {
+    if (!quizForOptions) return;
+    
+    try {
+      const updatedQuiz = { ...quizForOptions, ...options };
+      const { error } = await updateQuiz(user.uid, quizForOptions.id, updatedQuiz);
+      
+      if (error) throw new Error(error);
+      
+      // Update local state
+      setQuizzes(prevQuizzes => 
+        prevQuizzes.map(quiz => 
+          quiz.id === quizForOptions.id ? { ...quiz, ...options } : quiz
+        )
+      );
+      
+      toast({
+        title: "Success",
+        description: "Quiz options updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error updating quiz options:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update quiz options.",
+      });
+    } finally {
+      setQuizForOptions(null);
+    }
+  };
+
   const formatTitle = (title) => {
     const tit = title.replace(/ /g, "-");
     return tit;
@@ -122,38 +172,34 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold my-2">Dashboard</h1>
-      <p className="my-2">Welcome to your dashboard!</p>
-      <Link href="/dashboard/create">
-        <Button className="w-full max-w-7xl my-2">+ Create Quiz</Button>
-      </Link>
+      {/* <p className="my-2">Welcome to your dashboard!</p> */}
+
       <Separator className="my-6 max-w-7xl" />
+      <h2 className="text-xl font-semibold my-4">Your Quizzes</h2>
       {quizzes.length === 0 ? (
         <p className="text-center text-gray-500">
           No quizzes created yet. Create your first quiz!
         </p>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-7xl">
           {quizzes.map((quiz) => (
             <Card key={quiz.id} className="w-full">
-              <div className="grid grid-cols-1 md:grid-cols-2">
-                <div className="relative h-[200px] md:h-full">
-                  <Image
-                    src="/studying.jpg"
-                    alt="Quiz thumbnail"
-                    fill
-                    className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none"
-                  />
+              <div className="flex flex-row">
+                <div className="relative flex items-center px-6 justify-center">
+                  <MdChecklist className="h-12 w-12" />
                 </div>
-                <div className="p-6 flex flex-col justify-center">
-                  <CardHeader className="p-0 mb-4">
-                    {/* <CardTitle className="text-2xl break-words hyphens-auto overflow-wrap-anywhere">{quiz.title}</CardTitle> */}
-                    <CardTitle className="text-2xl whitespace-nowrap overflow-hidden text-ellipsis">
+                <div className="flex flex-col justify-center w-full">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xl whitespace-nowrap overflow-hidden text-ellipsis">
                       {quiz.title}
                     </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {quiz.questions?.length || 0} questions
+                    </p>
                   </CardHeader>
-                  <CardFooter className="p-0 mt-4 flex gap-2">
+                  <CardFooter className="flex gap-2 pt-2">
                     <Link
                       href={`/dashboard/${formatTitle(quiz.title)}`}
                       className="flex-1"
@@ -170,6 +216,9 @@ export default function Dashboard() {
                         <DropdownMenuItem onClick={() => setQuizToRename(quiz)}>
                           <span>Rename</span>
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setQuizForOptions(quiz)}>
+                          <span>Options</span>
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => handleDeleteClick(quiz)}
@@ -178,6 +227,48 @@ export default function Dashboard() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                  </CardFooter>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+      <Link href="/dashboard/create">
+        <Button className="w-full max-w-7xl my-6">+ Create New</Button>
+      </Link>
+
+      <Separator className="my-6 max-w-7xl" />
+      <h2 className="text-xl font-semibold my-4">Explore Public Quizzes</h2>
+      {publicQuizzes.length === 0 ? (
+        <p className="text-center text-gray-500">
+          No public quizzes available.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-7xl">
+          {publicQuizzes.map((quiz) => (
+            <Card key={quiz.id} className="w-full">
+              <div className="flex flex-row">
+                <div className="relative flex items-center px-6 justify-center">
+                  <MdChecklist className="h-12 w-12" />
+                </div>
+                <div className="flex flex-col justify-center w-full">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xl whitespace-nowrap overflow-hidden text-ellipsis">
+                      {quiz.title}
+                    </CardTitle>
+                    <div className="flex flex-col text-sm text-muted-foreground">
+                      <span>{quiz.questions?.length || 0} questions</span>
+                      <span>Created by {quiz.username || 'Anonymous'}</span>
+                    </div>
+                  </CardHeader>
+                  <CardFooter className="flex gap-2 pt-2">
+                    <Link
+                      href={`/dashboard/${formatTitle(quiz.title)}`}
+                      className="flex-1"
+                    >
+                      <Button className="w-full">Take Quiz</Button>
+                    </Link>
                   </CardFooter>
                 </div>
               </div>
@@ -202,6 +293,13 @@ export default function Dashboard() {
         onClose={() => setQuizToRename(null)}
         onRename={handleRename}
         currentTitle={quizToRename?.title || ''}
+      />
+
+      <QuizOptionsModal 
+        isOpen={!!quizForOptions}
+        onClose={() => setQuizForOptions(null)}
+        onSave={handleOptionsUpdate}
+        quiz={quizForOptions}
       />
     </div>
   );
