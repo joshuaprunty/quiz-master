@@ -10,11 +10,13 @@ import { IoAddCircleOutline } from "react-icons/io5";
 import { usePathname } from "next/navigation";
 import { IoMdFolderOpen } from "react-icons/io";
 import { IoMdStats } from "react-icons/io";
+import { IoBookOutline } from "react-icons/io5";
 
 const navigationItems = [
   { href: "/dashboard", label: "Dashboard", icon: GoHome },
   { href: "/dashboard/create", label: "Create New", icon: IoAddCircleOutline },
   { href: "/dashboard/scores", label: "Scores", icon: IoMdStats },
+  { href: "/dashboard/subjects", label: "Subjects", icon: IoBookOutline },
 ];
 
 export default function AuthenticatedLayout({ children }) {
