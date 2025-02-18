@@ -1,14 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Toaster } from "@/components/ui/toaster";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,25 +12,12 @@ import { useState, useCallback } from "react";
 import { useDropzone } from 'react-dropzone';
 import SaveQuizModal from "./SaveQuizModal";
 import QuizConfigModal from "./QuizConfigModal";
-import { RiSparkling2Fill } from "react-icons/ri";
-import { FaRegTrashAlt } from "react-icons/fa";
-import { FaRegEdit } from "react-icons/fa";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { BsThreeDots } from 'react-icons/bs';
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
 import { useQuestionState } from "@/hooks/useQuestionState";
 import { analyzeText, generateQuestions } from "@/services/quizService";
 import QuestionCard from "@/components/questions/QuestionCard";
 import TopicCard from "@/components/TopicCard";
 import { COPY_TEXT } from "@/lib/utils";
 import TopicEditor from "@/components/TopicEditor";
-
 
 export default function TextInput() {
   const [studyText, setStudyText] = useState("");
@@ -51,7 +30,6 @@ export default function TextInput() {
   const { user } = useAuthContext();
   const { toast } = useToast();
   const router = useRouter();
-
   const {
     questions,
     setQuestions,
@@ -90,7 +68,7 @@ export default function TextInput() {
       'application/msword': ['.doc'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
     },
-    maxSize: 5242880 // 5MB
+    maxSize: 5242880
   });
 
   const handleTopicToggle = (index, enabled) => {
@@ -224,7 +202,139 @@ export default function TextInput() {
     }
   };
 
-  
+  const checkAnswer = (questionIndex) => {
+    const question = questions[questionIndex];
+    let isCorrect;
+    
+    if (question.type === 'short-answer') {
+      const userAnswer = (selectedAnswers[questionIndex] || '').toLowerCase().trim();
+      const correctAnswer = question.correct_answer.toLowerCase().trim();
+      isCorrect = userAnswer === correctAnswer;
+    } else {
+      isCorrect = selectedAnswers[questionIndex] === question.correct_answer;
+    }
+    
+    setCheckedAnswers({
+      ...checkedAnswers,
+      [questionIndex]: isCorrect,
+    });
+    
+    setHasAttempted({
+      ...hasAttempted,
+      [questionIndex]: true
+    });
+  };
+
+  const handleAcceptRegeneration = (index) => {
+    // Clear the pending regeneration state
+    setPendingRegeneration(prev => {
+      const updated = { ...prev };
+      delete updated[index];
+      return updated;
+    });
+  };
+
+  const handleRevertRegeneration = (index) => {
+    // Revert to the previous question
+    setQuestions(prevQuestions =>
+      prevQuestions.map((q, i) =>
+        i === index ? pendingRegeneration[index].previous : q
+      )
+    );
+
+    // Clear the pending regeneration state
+    setPendingRegeneration(prev => {
+      const updated = { ...prev };
+      delete updated[index];
+      return updated;
+    });
+  };
+
+  const handleRegenerateQuestion = async (index) => {
+    setLoadingStates(prev => ({ ...prev, [index]: true }));
+    
+    try {
+      const question = questions[index];
+      const response = await fetch("/api/regenerate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          text: studyText,
+          questionType: question.type
+        }),
+      });
+
+      if (!response.ok) throw new Error("Question regeneration failed");
+
+      const newQuestion = await response.json();
+      if (newQuestion.error) {
+        throw new Error(newQuestion.error);
+      }
+
+      // Store the current question before replacing it
+      setPendingRegeneration(prev => ({
+        ...prev,
+        [index]: {
+          previous: questions[index],
+          new: newQuestion
+        }
+      }));
+
+      setQuestions(prevQuestions => 
+        prevQuestions.map((q, i) => 
+          i === index ? newQuestion : q
+        )
+      );
+
+      // Reset states for this question
+      setSelectedAnswers(prev => {
+        const updated = { ...prev };
+        delete updated[index];
+        return updated;
+      });
+      setCheckedAnswers(prev => {
+        const updated = { ...prev };
+        delete updated[index];
+        return updated;
+      });
+      setExplanationVisible(prev => {
+        const updated = { ...prev };
+        delete updated[index];
+        return updated;
+      });
+
+    } catch (error) {
+      console.error("Error regenerating question:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to regenerate question",
+      });
+    } finally {
+      setLoadingStates(prev => {
+        const updated = { ...prev };
+        delete updated[index];
+        return updated;
+      });
+    }
+  };
+
+  const handleDeleteQuestion = (index) => {
+    if (confirm(`Delete Question ${index + 1}?`)) {
+      setQuestions((prevQuestions) =>
+        prevQuestions.filter((_, i) => i !== index)
+      );
+
+      if (editingIndex === index) {
+        setEditingIndex(null);
+        setEditingCorrectAnswer(null);
+      }
+
+      setCheckedAnswers({});
+    }
+  };
 
   return (
     <div className="space-y-4 my-12 max-w-4xl">
@@ -353,14 +463,14 @@ export default function TextInput() {
                   setEditingIndex(null);
                   setEditingCorrectAnswer(null);
                 }}
-                onRegenerateQuestion={() => {/* implement regeneration logic */}}
-                onAcceptRegeneration={() => {/* implement accept logic */}}
-                onRevertRegeneration={() => {/* implement revert logic */}}
-                onDeleteQuestion={() => {/* implement delete logic */}}
+                onRegenerateQuestion={handleRegenerateQuestion}
+                onAcceptRegeneration={handleAcceptRegeneration}
+                onRevertRegeneration={handleRevertRegeneration}
+                onDeleteQuestion={handleDeleteQuestion}
                 onAnswerSelect={(value) => 
                   setSelectedAnswers(prev => ({ ...prev, [index]: value }))
                 }
-                onCheckAnswer={() => {/* implement check answer logic */}}
+                onCheckAnswer={checkAnswer}
                 onToggleExplanation={() => 
                   setExplanationVisible(prev => ({ ...prev, [index]: !prev[index] }))
                 }

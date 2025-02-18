@@ -12,7 +12,6 @@ import { useEffect, useState } from "react";
 export default function RenameQuizModal({ isOpen, onClose, onRename, currentTitle }) {
   const [newTitle, setNewTitle] = useState("");
 
-  // Update newTitle when the modal opens with a new quiz
   useEffect(() => {
     if (isOpen && currentTitle) {
       setNewTitle(currentTitle);
