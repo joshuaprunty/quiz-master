@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import CreateSubjectModal from "@/components/CreateSubjectModal";
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAuthContext } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { saveSubject, getUserSubjects } from "@/firebase/firestore/subjectOperations";
 import { useToast } from "@/hooks/use-toast";
+import { IoBookOutline } from "react-icons/io5";
+import Link from "next/link";
 
 export default function SubjectsPage() {
   const { user } = useAuthContext();
@@ -83,10 +85,25 @@ export default function SubjectsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {subjects.map((subject) => (
-            <Card key={subject.id}>
-              <CardHeader>
-                <CardTitle className="text-xl">{subject.name}</CardTitle>
-              </CardHeader>
+            <Card key={subject.id} className="w-full">
+              <div className="flex flex-row">
+                <div className="relative flex items-center px-6 justify-center">
+                  <IoBookOutline className="h-12 w-12" />
+                </div>
+                <div className="flex flex-col justify-center w-full">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xl">{subject.name}</CardTitle>
+                  </CardHeader>
+                  <CardFooter className="flex gap-2 pt-2">
+                    <Link
+                      href={`/dashboard/subjects/${subject.name.toLowerCase().replace(/\s+/g, '-')}`}
+                      className="flex-1"
+                    >
+                      <Button className="w-full">View Subject</Button>
+                    </Link>
+                  </CardFooter>
+                </div>
+              </div>
             </Card>
           ))}
         </div>
