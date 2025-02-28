@@ -6,10 +6,12 @@ import getUserQuizzes from "@/firebase/firestore/getUserQuizzes";
 import { getPublicQuizzes } from "@/firebase/firestore/publicQuizzes";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { TbSettings } from "react-icons/tb";
 import { MdChecklist } from "react-icons/md";
+import { TbSettings } from "react-icons/tb";
 
 
+import QuizOptionsModal from "@/components/QuizOptionsModal";
+import RenameQuizModal from "@/components/RenameQuizModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -19,12 +21,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import Image from "next/image";
-import Link from "next/link";
-import RenameQuizModal from "@/components/RenameQuizModal";
-import { useToast } from "@/hooks/use-toast";
 import updateQuiz from "@/firebase/firestore/updateQuiz";
-import QuizOptionsModal from "@/components/QuizOptionsModal";
+import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 export default function Dashboard() {
   const { user } = useAuthContext();

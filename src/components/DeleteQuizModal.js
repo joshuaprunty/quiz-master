@@ -1,11 +1,11 @@
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { DialogDescription } from "@radix-ui/react-dialog";
 
 export default function DeleteQuizModal({
@@ -16,16 +16,14 @@ export default function DeleteQuizModal({
   quizTitle,
 }) {
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Quiz</DialogTitle>
         </DialogHeader>
         <DialogDescription className="py-4">
-          Are you sure you want to delete "{quizTitle}"? This action cannot be
-          undone.
+          Are you sure you want to delete "{quizTitle}"? This action cannot be undone.
         </DialogDescription>
-
         <DialogFooter>
           <Button
             type="button"

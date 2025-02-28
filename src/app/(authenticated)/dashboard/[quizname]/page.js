@@ -11,13 +11,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Toaster } from "@/components/ui/toaster";
 import { useAuthContext } from "@/context/AuthContext";
 import getQuizByTitle from "@/firebase/firestore/getQuizByTitle";
+import saveQuizResult from "@/firebase/firestore/saveQuizResult";
 import updateQuiz from "@/firebase/firestore/updateQuiz";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
-import QuestionViewCard from "@/components/questions/QuestionViewCard";
-import saveQuizResult from "@/firebase/firestore/saveQuizResult";
 
 export default function QuizPage({ params }) {
   const { quizname } = use(params);
@@ -53,8 +52,12 @@ export default function QuizPage({ params }) {
         router.push("/dashboard");
         return;
       }
+      const questionsWithId = result.questions.map((q, i) => ({
+        ...q,
+        id: q.id || i.toString(), // use Firestore id if available, otherwise use index as string
+      }));
       setQuiz(result);
-      setQuestions(result.questions);
+      setQuestions(questionsWithId);
       setLoading(false);
     };
 
@@ -91,21 +94,20 @@ export default function QuizPage({ params }) {
     );
   };
 
-  const checkAnswer = (questionIndex) => {
-    const question = questions[questionIndex];
+  const checkAnswer = (questionId, question) => {
     let isCorrect;
     
     if (question.type === 'short-answer') {
-      const userAnswer = (selectedAnswers[questionIndex] || '').toLowerCase().trim();
+      const userAnswer = (selectedAnswers[questionId] || '').toLowerCase().trim();
       const correctAnswer = question.correct_answer.toLowerCase().trim();
       isCorrect = userAnswer === correctAnswer;
     } else {
-      isCorrect = selectedAnswers[questionIndex] === question.correct_answer;
+      isCorrect = selectedAnswers[questionId] === question.correct_answer;
     }
     
     setCheckedAnswers({
       ...checkedAnswers,
-      [questionIndex]: isCorrect,
+      [questionId]: isCorrect,
     });
   };
 
@@ -206,6 +208,52 @@ export default function QuizPage({ params }) {
     }
   };
 
+  const handleRegenerateQuestion = async (questionIndex) => {
+    try {
+      const response = await fetch("/api/generate-similar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentQuestion: {
+            ...questions[questionIndex],
+            quizId: quiz.id,
+            userId: user.uid, // Ensure the user id is included
+          },
+        }),
+      });
+      if (response.ok) {
+        const newQuestion = await response.json();
+        // Mark the new question as generated and initialize a default explanation if missing
+        const cleanNewQuestion = {
+          ...newQuestion,
+          isGenerated: true,
+          explanation: newQuestion.explanation || "No explanation available.",
+          id: newQuestion.id || Date.now().toString(), // assign a new id if not provided
+        };
+  
+        // Insert the new question immediately after the current one
+        setQuestions((prev) => {
+          const updated = [...prev];
+          updated.splice(questionIndex + 1, 0, cleanNewQuestion);
+          return updated;
+        });
+  
+        // Also clear any UI state for the new question using its unique id
+        setSelectedAnswers((prev) => ({ ...prev, [cleanNewQuestion.id]: "" }));
+        setCheckedAnswers((prev) => {
+          const updated = { ...prev };
+          // No previous check state for this new question
+          return updated;
+        });
+        setExplanationVisible((prev) => ({ ...prev, [cleanNewQuestion.id]: false }));
+      } else {
+        console.error("Error generating similar question", await response.json());
+      }
+    } catch (error) {
+      console.error("Error generating similar question", error);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!quiz) return;
 
@@ -214,13 +262,13 @@ export default function QuizPage({ params }) {
     const questionResults = {};
 
     questions.forEach((question, index) => {
-      const isCorrect = selectedAnswers[index] === question.correct_answer;
-      newCheckedAnswers[index] = isCorrect;
+      const isCorrect = selectedAnswers[question.id] === question.correct_answer;
+      newCheckedAnswers[question.id] = isCorrect;
       if (isCorrect) correctCount++;
       
-      questionResults[`question_${index + 1}`] = {
+      questionResults[`question_${question.id}`] = {
         question: question.question,
-        userAnswer: selectedAnswers[index],
+        userAnswer: selectedAnswers[question.id],
         correctAnswer: question.correct_answer,
         result: isCorrect ? 'correct' : 'incorrect'
       };
@@ -261,7 +309,7 @@ export default function QuizPage({ params }) {
   };
 
   const allQuestionsAnswered = questions.every(
-    (_, index) => selectedAnswers[index]
+    (question) => selectedAnswers[question.id]
   );
 
   if (loading) {
@@ -293,13 +341,12 @@ export default function QuizPage({ params }) {
 
       <div className="mt-8 space-y-4">
         <div className="grid gap-6">
-          
           {questions.map((question, index) => (
             <Card
-              key={index}
+              key={question.id} // Use question.id here
               className={`w-full ${
-                submitted && checkedAnswers[index] !== undefined
-                  ? checkedAnswers[index]
+                submitted && checkedAnswers[question.id] !== undefined
+                  ? checkedAnswers[question.id]
                     ? "border-green-500"
                     : "border-red-500"
                   : ""
@@ -376,36 +423,33 @@ export default function QuizPage({ params }) {
                     <div className="space-y-2">
                       <input
                         type="text"
-                        value={selectedAnswers[index] || ''}
+                        value={selectedAnswers[question.id] || ''}
                         onChange={(e) => 
                           setSelectedAnswers({
                             ...selectedAnswers,
-                            [index]: e.target.value
+                            [question.id]: e.target.value
                           })
                         }
                         className="w-full border border-gray-300 rounded px-3 py-2"
                         placeholder="Type your answer here..."
-                        disabled={submitted}
+                        disabled={submitted && !question.isGenerated}
                       />
                     </div>
                   ) : (
                     <RadioGroup
-                      value={selectedAnswers[index]}
+                      value={selectedAnswers[question.id]}
                       onValueChange={(value) =>
                         setSelectedAnswers({
                           ...selectedAnswers,
-                          [index]: value,
+                          [question.id]: value,
                         })
                       }
-                      disabled={submitted}
+                      disabled={submitted && !question.isGenerated}
                     >
                       {question.answers.map((answer, ansIndex) => (
                         <div key={ansIndex} className="flex items-center space-x-2">
-                          <RadioGroupItem
-                            value={answer}
-                            id={`q${index}-a${ansIndex}`}
-                          />
-                          <Label htmlFor={`q${index}-a${ansIndex}`}>
+                          <RadioGroupItem value={answer} id={`q${question.id}-a${ansIndex}`} />
+                          <Label htmlFor={`q${question.id}-a${ansIndex}`}>
                             {answer}
                           </Label>
                         </div>
@@ -423,21 +467,21 @@ export default function QuizPage({ params }) {
                   <div className="flex flex-row justify-between items-center w-full">
                     <div className="flex flex-row items-center gap-4">
                       <Button
-                        onClick={() => checkAnswer(index)}
-                        disabled={!selectedAnswers[index]}
+                        onClick={() => checkAnswer(question.id, question)}
+                        disabled={!selectedAnswers[question.id] || (submitted && !question.isGenerated)}
                         variant="secondary"
                       >
                         Check Answer
                       </Button>
-                      {checkedAnswers[index] !== undefined && (
+                      {checkedAnswers[question.id] !== undefined && (
                         <p
                           className={
-                            checkedAnswers[index]
+                            checkedAnswers[question.id]
                               ? "text-green-600"
                               : "text-red-600"
                           }
                         >
-                          {checkedAnswers[index] ? "Correct!" : "Incorrect"}
+                          {checkedAnswers[question.id] ? "Correct!" : "Incorrect"}
                         </p>
                       )}
                     </div>
@@ -452,29 +496,36 @@ export default function QuizPage({ params }) {
                 {/* Explanation Button */}
                 <Button
                   onClick={() => {
-                    if (!selectedAnswers[index]) {
+                    if (!selectedAnswers[question.id]) {
                       toast({
                         variant: "destructive",
                         title: "Error",
-                        description:
-                          "Please answer the question first to view the explanation.",
+                        description: "Please answer the question first to view the explanation.",
                       });
                       return;
                     }
                     setExplanationVisible((prev) => ({
                       ...prev,
-                      [index]: !prev[index],
+                      [question.id]: !prev[question.id],
                     }));
                   }}
                   className="mt-2"
                 >
-                  {explanationVisible[index]
-                    ? "Hide Explanation"
-                    : "View Explanation"}
+                  {explanationVisible[question.id] ? "Hide Explanation" : "View Explanation"}
+                </Button>
+
+                {/* Generate Similar Question Button */}
+                <Button
+                  onClick={() => handleRegenerateQuestion(index)}
+                  disabled={!submitted}
+                  variant="secondary"
+                  className="mt-2"
+                >
+                  Generate Similar Question
                 </Button>
 
                 {/* Explanation Box */}
-                {explanationVisible[index] && (
+                {explanationVisible[question.id] && (
                   <div className="mt-4 p-3 bg-gray-100 rounded-lg">
                     <p>{question.explanation || "No explanation available."}</p>
                   </div>
