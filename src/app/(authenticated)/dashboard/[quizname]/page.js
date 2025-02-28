@@ -209,6 +209,17 @@ export default function QuizPage({ params }) {
   };
 
   const handleRegenerateQuestion = async (questionIndex) => {
+    // Check if the quiz has been submitted
+    if (!submitted) {
+      toast({
+        variant: "destructive",
+        title: "Quiz Not Submitted",
+        description: "Please submit your answers before generating a similar question.",
+      });
+      return;
+    }
+  
+    // Otherwise, proceed with generation...
     try {
       const response = await fetch("/api/generate-similar", {
         method: "POST",
@@ -217,34 +228,28 @@ export default function QuizPage({ params }) {
           currentQuestion: {
             ...questions[questionIndex],
             quizId: quiz.id,
-            userId: user.uid, // Ensure the user id is included
+            userId: user.uid,
           },
         }),
       });
       if (response.ok) {
         const newQuestion = await response.json();
-        // Mark the new question as generated and initialize a default explanation if missing
+        // Mark the new question as generated and initialize/reset UI state for it
         const cleanNewQuestion = {
           ...newQuestion,
           isGenerated: true,
           explanation: newQuestion.explanation || "No explanation available.",
-          id: newQuestion.id || Date.now().toString(), // assign a new id if not provided
+          id: newQuestion.id || Date.now().toString(),
         };
   
-        // Insert the new question immediately after the current one
         setQuestions((prev) => {
           const updated = [...prev];
           updated.splice(questionIndex + 1, 0, cleanNewQuestion);
           return updated;
         });
-  
-        // Also clear any UI state for the new question using its unique id
+        // Clear state for the new question if needed:
         setSelectedAnswers((prev) => ({ ...prev, [cleanNewQuestion.id]: "" }));
-        setCheckedAnswers((prev) => {
-          const updated = { ...prev };
-          // No previous check state for this new question
-          return updated;
-        });
+        setCheckedAnswers((prev) => ({ ...prev }));
         setExplanationVisible((prev) => ({ ...prev, [cleanNewQuestion.id]: false }));
       } else {
         console.error("Error generating similar question", await response.json());
@@ -496,6 +501,16 @@ export default function QuizPage({ params }) {
                 {/* Explanation Button */}
                 <Button
                   onClick={() => {
+                    // Check if quiz is submitted
+                    if (!submitted) {
+                      toast({
+                        variant: "destructive",
+                        title: "Quiz Not Submitted",
+                        description: "Please submit your quiz before viewing explanations.",
+                      });
+                      return;
+                    }
+                    // Then, check if the question has been answered
                     if (!selectedAnswers[question.id]) {
                       toast({
                         variant: "destructive",
@@ -504,6 +519,7 @@ export default function QuizPage({ params }) {
                       });
                       return;
                     }
+                    // Toggle explanation visibility
                     setExplanationVisible((prev) => ({
                       ...prev,
                       [question.id]: !prev[question.id],
@@ -517,7 +533,6 @@ export default function QuizPage({ params }) {
                 {/* Generate Similar Question Button */}
                 <Button
                   onClick={() => handleRegenerateQuestion(index)}
-                  disabled={!submitted}
                   variant="secondary"
                   className="mt-2"
                 >

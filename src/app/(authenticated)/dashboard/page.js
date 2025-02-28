@@ -76,7 +76,7 @@ export default function Dashboard() {
 
   const handleDeleteConfirm = async () => {
     if (!selectedQuiz) return;
-
+  
     setIsDeleting(true);
     try {
       const { error } = await deleteQuiz(user.uid, selectedQuiz.id);
@@ -84,7 +84,7 @@ export default function Dashboard() {
         console.error("Error deleting quiz:", error);
         return;
       }
-
+  
       // Refresh quizzes list
       const { result } = await getUserQuizzes(user.uid);
       setQuizzes(result);
@@ -92,7 +92,7 @@ export default function Dashboard() {
       console.error("Error deleting quiz:", error);
     } finally {
       setIsDeleting(false);
-      setDeleteModalOpen(false);
+      setDeleteModalOpen(false); // close the modal
       setSelectedQuiz(null);
     }
   };
@@ -278,10 +278,7 @@ export default function Dashboard() {
 
       <DeleteQuizModal
         isOpen={deleteModalOpen}
-        onClose={() => {
-          setDeleteModalOpen(false);
-          setSelectedQuiz(null);
-        }}
+        onOpenChange={setDeleteModalOpen}  // pass the state setter
         onConfirm={handleDeleteConfirm}
         loading={isDeleting}
         quizTitle={selectedQuiz?.title}
