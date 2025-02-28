@@ -70,7 +70,7 @@ export async function POST(req) {
       "question": "question text",
       "answers": ["option1", "option2", "option3", "option4"],
       "correct_answer": "exact text of correct answer",
-      "explanation": "The correct answer is <correct_answer>. It is correct because ..."
+      "explanation": "The correct answer is <correct_answer>. Because ..."
     }
 
     ${config['true-false']} true/false questions in this format:
@@ -79,7 +79,7 @@ export async function POST(req) {
       "question": "question text",
       "answers": ["True", "False"],
       "correct_answer": "True" or "False",
-      "explanation": "The correct answer is <true/false>. It is correct because ..."
+      "explanation": "The correct answer is <true/false>. Because ..."
     }
 
     ${config['short-answer']} short answer questions in this format:
@@ -87,7 +87,7 @@ export async function POST(req) {
       "type": "short-answer",
       "question": "question text",
       "correct_answer": "exact text of correct answer",
-      "explanation": "The correct answer is <correct_answer>. It is correct because ..."
+      "explanation": "The correct answer is <correct_answer>. Because ..."
     }`;
 
     const response = await openai.beta.chat.completions.parse({

@@ -6,8 +6,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { BsThreeDots } from 'react-icons/bs';
+import { FaRegEdit, FaRegTrashAlt } from "react-icons/fa";
 import { RiSparkling2Fill } from "react-icons/ri";
-import { FaRegTrashAlt, FaRegEdit } from "react-icons/fa";
 
 export default function QuestionActions({
   index,
