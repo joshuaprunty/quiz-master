@@ -500,36 +500,35 @@ export default function QuizPage({ params }) {
                 )}
                 {/* Explanation Button */}
                 <Button
-                  onClick={() => {
-                    // Check if quiz is submitted
-                    if (!submitted) {
-                      toast({
-                        variant: "destructive",
-                        title: "Quiz Not Submitted",
-                        description: "Please submit your quiz before viewing explanations.",
-                      });
-                      return;
-                    }
-                    // Then, check if the question has been answered
-                    if (!selectedAnswers[question.id]) {
-                      toast({
-                        variant: "destructive",
-                        title: "Error",
-                        description: "Please answer the question first to view the explanation.",
-                      });
-                      return;
-                    }
-                    // Toggle explanation visibility
-                    setExplanationVisible((prev) => ({
-                      ...prev,
-                      [question.id]: !prev[question.id],
-                    }));
-                  }}
-                  className="mt-2"
-                >
-                  {explanationVisible[question.id] ? "Hide Explanation" : "View Explanation"}
-                </Button>
-
+                onClick={() => {
+                  // Check if quiz is submitted
+                  if (!submitted) {
+                    toast({
+                      variant: "destructive",
+                      title: "Quiz Not Submitted",
+                      description: "Please submit your quiz before viewing explanations.",
+                    });
+                    return;
+                  }
+                  // Then, check if the question has been answered
+                  if (!selectedAnswers[question.id]) {
+                    toast({
+                      variant: "destructive",
+                      title: "Error",
+                      description: "Please answer the question first to view the explanation.",
+                    });
+                    return;
+                  }
+                  // Toggle explanation visibility
+                  setExplanationVisible((prev) => ({
+                    ...prev,
+                    [question.id]: !prev[question.id],
+                  }));
+                }}
+                className="mt-2"
+              >
+                {explanationVisible[question.id] ? "Hide Explanation" : "View Explanation"}
+              </Button>
                 {/* Generate Similar Question Button */}
                 <Button
                   onClick={() => handleRegenerateQuestion(index)}

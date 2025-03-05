@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useEffect, useState } from "react";
 
 export default function QuizOptionsModal({ isOpen, onClose, onSave, quiz }) {
   const [isPublic, setIsPublic] = useState(true);
@@ -17,7 +17,7 @@ export default function QuizOptionsModal({ isOpen, onClose, onSave, quiz }) {
     if (quiz) {
       setIsPublic(quiz.public !== undefined ? quiz.public : true);
     }
-    // Reset state when modal closes
+    // Or handle resetting if needed
     if (!isOpen) {
       setIsPublic(true);
     }
@@ -30,7 +30,7 @@ export default function QuizOptionsModal({ isOpen, onClose, onSave, quiz }) {
 
   const handleOpenChange = (open) => {
     if (!open) {
-      // Reset state when modal closes via escape key or clicking outside
+      // If user closes externally, reset state if needed
       setIsPublic(true);
       onClose();
     }

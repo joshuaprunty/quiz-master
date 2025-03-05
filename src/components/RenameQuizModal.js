@@ -2,9 +2,9 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
@@ -12,7 +12,6 @@ import { useEffect, useState } from "react";
 export default function RenameQuizModal({ isOpen, onClose, onRename, currentTitle }) {
   const [newTitle, setNewTitle] = useState("");
 
-  // Update newTitle when the modal opens with a new quiz
   useEffect(() => {
     if (isOpen && currentTitle) {
       setNewTitle(currentTitle);
@@ -27,7 +26,13 @@ export default function RenameQuizModal({ isOpen, onClose, onRename, currentTitl
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        // If user closes by Esc/backdrop, call onClose in parent
+        if (!open) onClose();
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Rename Quiz</DialogTitle>
@@ -45,8 +50,8 @@ export default function RenameQuizModal({ isOpen, onClose, onRename, currentTitl
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleSubmit} 
+          <Button
+            onClick={handleSubmit}
             disabled={!newTitle.trim() || newTitle === currentTitle}
           >
             Rename
