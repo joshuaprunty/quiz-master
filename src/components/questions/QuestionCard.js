@@ -1,26 +1,14 @@
-import { useState } from "react";
+import QuestionActions from "@/components/questions/QuestionActions";
+import QuestionAnswerForm from "@/components/questions/QuestionAnswerForm";
+import QuestionEditForm from "@/components/questions/QuestionEditForm";
+import QuestionFooter from "@/components/questions/QuestionFooter";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { BsThreeDots } from 'react-icons/bs';
-import { RiSparkling2Fill } from "react-icons/ri";
-import { FaRegTrashAlt, FaRegEdit } from "react-icons/fa";
-import QuestionActions from "@/components/questions/QuestionActions";
-import QuestionAnswerForm from "@/components/questions/QuestionAnswerForm";
-import QuestionEditForm from "@/components/questions/QuestionEditForm";
-import QuestionFooter from "@/components/questions/QuestionFooter";
 
 export default function QuestionCard({
   question,
@@ -112,6 +100,15 @@ export default function QuestionCard({
           onCheckAnswer={onCheckAnswer}
           onToggleExplanation={onToggleExplanation}
         />
+        {checkedAnswers[index] !== undefined && (
+          <p
+            className={
+              checkedAnswers[index] ? "text-green-600" : "text-red-600"
+            }
+          >
+            {checkedAnswers[index] ? "Correct!" : "Incorrect"}
+          </p>
+        )}
       </CardFooter>
     </Card>
   );

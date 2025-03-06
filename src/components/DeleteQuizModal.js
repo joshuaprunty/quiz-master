@@ -10,13 +10,19 @@ import { DialogDescription } from "@radix-ui/react-dialog";
 
 export default function DeleteQuizModal({
   isOpen,
-  onOpenChange,  // new prop: a function to update open state
+  onOpenChange,  // parent sets this: (open) => setDeleteModalOpen(open)
   onConfirm,
   loading,
   quizTitle,
 }) {
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        // If user clicks outside or presses Esc, close the modal in parent
+        if (!open) onOpenChange(false);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Quiz</DialogTitle>
@@ -28,7 +34,7 @@ export default function DeleteQuizModal({
           <Button
             type="button"
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => onOpenChange(false)} // closes modal
             disabled={loading}
           >
             Cancel
@@ -36,7 +42,7 @@ export default function DeleteQuizModal({
           <Button
             type="button"
             variant="destructive"
-            onClick={onConfirm}
+            onClick={onConfirm} // your confirm logic
             disabled={loading}
           >
             {loading ? "Deleting..." : "Delete Quiz"}

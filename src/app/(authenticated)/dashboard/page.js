@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { MdChecklist } from "react-icons/md";
 import { TbSettings } from "react-icons/tb";
 
-
 import QuizOptionsModal from "@/components/QuizOptionsModal";
 import RenameQuizModal from "@/components/RenameQuizModal";
 import { Button } from "@/components/ui/button";
@@ -28,24 +27,33 @@ import Link from "next/link";
 export default function Dashboard() {
   const { user } = useAuthContext();
   const router = useRouter();
+  const { toast } = useToast();
+
+  // Quiz lists
   const [quizzes, setQuizzes] = useState([]);
   const [publicQuizzes, setPublicQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Delete quiz modal
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [quizToRename, setQuizToRename] = useState(null);
-  const [quizForOptions, setQuizForOptions] = useState(null);
-  const { toast } = useToast();
 
+  // Rename quiz modal
+  const [quizToRename, setQuizToRename] = useState(null);
+
+  // Options modal
+  const [quizForOptions, setQuizForOptions] = useState(null);
+
+  // Fetch quizzes
   useEffect(() => {
-    if (user == null) {
+    if (!user) {
       router.push("/");
       return;
     }
 
     const fetchQuizzes = async () => {
-      // Fetch user's quizzes
+      // 1) Fetch user's quizzes
       const { result: userQuizzes, error: userError } = await getUserQuizzes(user.uid);
       if (userError) {
         console.error("Error fetching user quizzes:", userError);
@@ -53,14 +61,17 @@ export default function Dashboard() {
       }
       setQuizzes(userQuizzes);
 
-      // Fetch public quizzes
-      const { result: publicQuizzes, error: publicError } = await getPublicQuizzes();
+      // 2) Fetch public quizzes
+      const { result: publicQuizzesData, error: publicError } = await getPublicQuizzes();
       if (publicError) {
         console.error("Error fetching public quizzes:", publicError);
         return;
       }
+
       // Filter out user's own quizzes from public quizzes
-      const filteredPublicQuizzes = publicQuizzes.filter(quiz => quiz.userId !== user.uid);
+      const filteredPublicQuizzes = publicQuizzesData.filter(
+        (quiz) => quiz.userId !== user.uid
+      );
       setPublicQuizzes(filteredPublicQuizzes);
 
       setLoading(false);
@@ -69,6 +80,11 @@ export default function Dashboard() {
     fetchQuizzes();
   }, [user, router]);
 
+  // ------------------
+  // CRUD Handlers
+  // ------------------
+
+  // Delete
   const handleDeleteClick = (quiz) => {
     setSelectedQuiz(quiz);
     setDeleteModalOpen(true);
@@ -76,7 +92,6 @@ export default function Dashboard() {
 
   const handleDeleteConfirm = async () => {
     if (!selectedQuiz) return;
-  
     setIsDeleting(true);
     try {
       const { error } = await deleteQuiz(user.uid, selectedQuiz.id);
@@ -84,8 +99,8 @@ export default function Dashboard() {
         console.error("Error deleting quiz:", error);
         return;
       }
-  
-      // Refresh quizzes list
+
+      // Refresh quizzes
       const { result } = await getUserQuizzes(user.uid);
       setQuizzes(result);
     } catch (error) {
@@ -97,22 +112,19 @@ export default function Dashboard() {
     }
   };
 
+  // Rename
   const handleRename = async (newTitle) => {
     if (!quizToRename) return;
-    
     try {
       const updatedQuiz = { ...quizToRename, title: newTitle };
       const { error } = await updateQuiz(user.uid, quizToRename.id, updatedQuiz);
-      
       if (error) throw new Error(error);
-      
+
       // Update local state
-      setQuizzes(prevQuizzes => 
-        prevQuizzes.map(quiz => 
-          quiz.id === quizToRename.id ? { ...quiz, title: newTitle } : quiz
-        )
+      setQuizzes((prev) =>
+        prev.map((q) => (q.id === quizToRename.id ? { ...q, title: newTitle } : q))
       );
-      
+
       toast({
         title: "Success",
         description: "Quiz renamed successfully.",
@@ -129,22 +141,19 @@ export default function Dashboard() {
     }
   };
 
+  // Options
   const handleOptionsUpdate = async (options) => {
     if (!quizForOptions) return;
-    
     try {
       const updatedQuiz = { ...quizForOptions, ...options };
       const { error } = await updateQuiz(user.uid, quizForOptions.id, updatedQuiz);
-      
       if (error) throw new Error(error);
-      
+
       // Update local state
-      setQuizzes(prevQuizzes => 
-        prevQuizzes.map(quiz => 
-          quiz.id === quizForOptions.id ? { ...quiz, ...options } : quiz
-        )
+      setQuizzes((prev) =>
+        prev.map((q) => (q.id === quizForOptions.id ? { ...q, ...options } : q))
       );
-      
+
       toast({
         title: "Success",
         description: "Quiz options updated successfully.",
@@ -161,21 +170,25 @@ export default function Dashboard() {
     }
   };
 
+  // Format for URL
   const formatTitle = (title) => {
-    const tit = title.replace(/ /g, "-");
-    return tit;
+    if (!title) return "";
+    return title.replace(/ /g, "-");
   };
 
+  // Loading
   if (loading) {
     return <div className="p-8">Loading...</div>;
   }
 
+  // ------------------
+  // Render
+  // ------------------
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold my-2">Dashboard</h1>
-      {/* <p className="my-2">Welcome to your dashboard!</p> */}
-
       <Separator className="my-6 max-w-7xl" />
+
       <h2 className="text-xl font-semibold my-4">Your Quizzes</h2>
       {quizzes.length === 0 ? (
         <p className="text-center text-gray-500">
@@ -199,28 +212,59 @@ export default function Dashboard() {
                     </p>
                   </CardHeader>
                   <CardFooter className="flex gap-2 pt-2">
-                    <Link
-                      href={`/dashboard/${formatTitle(quiz.title)}`}
-                      className="flex-1"
-                    >
+                    <Link href={`/dashboard/${formatTitle(quiz.title)}`} className="flex-1">
                       <Button className="w-full">View</Button>
                     </Link>
-                    <DropdownMenu>
+
+                    {/* Each quiz has its own dropdown menu */}
+                    <DropdownMenu
+                      // Optional: track open/close state or debug
+                      onOpenChange={(open) => {
+                        if (!open) {
+                          // The menu just closed
+                          // If you need to do something on close, do it here
+                        }
+                      }}
+                      // Optional: manually override default close focus if desired
+                      onCloseAutoFocus={(event) => {
+                        // Typically you do nothing here, letting Radix revert focus to the trigger
+                        // But if you want to prevent focusing the trigger:
+                        // event.preventDefault(); // and then focus something else if you want
+                      }}
+                    >
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="icon">
                           <TbSettings className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => setQuizToRename(quiz)}>
+                        {/* "Rename" */}
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            // onSelect automatically closes the dropdown
+                            // Then we open the Rename modal
+                            setQuizToRename(quiz);
+                          }}
+                        >
                           <span>Rename</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setQuizForOptions(quiz)}>
+
+                        {/* "Options" */}
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            setQuizForOptions(quiz);
+                          }}
+                        >
                           <span>Options</span>
                         </DropdownMenuItem>
+
+                        {/* "Delete" */}
                         <DropdownMenuItem
                           className="text-destructive"
-                          onClick={() => handleDeleteClick(quiz)}
+                          onSelect={() => {
+                            // "Delete" automatically closes the dropdown, then opens the Delete modal
+                            handleDeleteClick(quiz);
+                          }}
                         >
                           <span>Delete</span>
                         </DropdownMenuItem>
@@ -233,6 +277,7 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+
       <Link href="/dashboard/create">
         <Button className="w-full max-w-7xl my-6">+ Create New</Button>
       </Link>
@@ -258,14 +303,11 @@ export default function Dashboard() {
                     </CardTitle>
                     <div className="flex flex-col text-sm text-muted-foreground">
                       <span>{quiz.questions?.length || 0} questions</span>
-                      <span>Created by {quiz.username || 'Anonymous'}</span>
+                      <span>Created by {quiz.username || "Anonymous"}</span>
                     </div>
                   </CardHeader>
                   <CardFooter className="flex gap-2 pt-2">
-                    <Link
-                      href={`/dashboard/${formatTitle(quiz.title)}`}
-                      className="flex-1"
-                    >
+                    <Link href={`/dashboard/${formatTitle(quiz.title)}`} className="flex-1">
                       <Button className="w-full">Take Quiz</Button>
                     </Link>
                   </CardFooter>
@@ -276,22 +318,23 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Modals */}
       <DeleteQuizModal
         isOpen={deleteModalOpen}
-        onOpenChange={setDeleteModalOpen}  // pass the state setter
+        onOpenChange={setDeleteModalOpen}
         onConfirm={handleDeleteConfirm}
         loading={isDeleting}
         quizTitle={selectedQuiz?.title}
       />
 
-      <RenameQuizModal 
+      <RenameQuizModal
         isOpen={!!quizToRename}
         onClose={() => setQuizToRename(null)}
         onRename={handleRename}
-        currentTitle={quizToRename?.title || ''}
+        currentTitle={quizToRename?.title || ""}
       />
 
-      <QuizOptionsModal 
+      <QuizOptionsModal
         isOpen={!!quizForOptions}
         onClose={() => setQuizForOptions(null)}
         onSave={handleOptionsUpdate}
