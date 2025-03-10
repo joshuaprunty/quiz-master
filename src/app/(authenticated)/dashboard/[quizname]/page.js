@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Toaster } from "@/components/ui/toaster";
 import { useAuthContext } from "@/context/AuthContext";
+import getPublicQuizByTitle from "@/firebase/firestore/getPublicQuizByTitle";
 import getQuizByTitle from "@/firebase/firestore/getQuizByTitle";
 import saveQuizResult from "@/firebase/firestore/saveQuizResult";
 import updateQuiz from "@/firebase/firestore/updateQuiz";
@@ -42,25 +43,35 @@ export default function QuizPage({ params }) {
       router.push("/");
       return;
     }
-
+  
     const fetchQuiz = async () => {
-      const { result, error } = await getQuizByTitle(
+      // First, try to fetch the quiz from the user's collection
+      let { result, error } = await getQuizByTitle(
         user.uid,
-        quizname.replace(/-/g, " ")
+        decodeURIComponent(quizname).replace(/-/g, " ")
       );
+  
+      // If not found or an error occurs, try the public collection
+      if (error || !result) {
+        ({ result, error } = await getPublicQuizByTitle(
+          decodeURIComponent(quizname).replace(/-/g, " ")
+        ));
+      }
+  
       if (error || !result) {
         router.push("/dashboard");
         return;
       }
+      // Map questions with an id if necessary
       const questionsWithId = result.questions.map((q, i) => ({
         ...q,
-        id: q.id || i.toString(), // use Firestore id if available, otherwise use index as string
+        id: q.id || i.toString(), // fallback id
       }));
       setQuiz(result);
       setQuestions(questionsWithId);
       setLoading(false);
     };
-
+  
     fetchQuiz();
   }, [user, quizname, router]);
 
