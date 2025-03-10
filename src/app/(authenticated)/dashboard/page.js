@@ -112,7 +112,7 @@ export default function Dashboard() {
       setIsDeleting(false);
       setDeleteModalOpen(false); // close the modal
       setSelectedQuiz(null);
-      setTimeout(() => window.location.reload(), 2000); // refresh after a 2-second delay
+      setTimeout(() => window.location.reload(), 1000); // refresh after a 2-second delay
     }
   };
 
@@ -348,7 +348,7 @@ export default function Dashboard() {
         isOpen={!!quizToRename}
         onClose={() => { 
           setQuizToRename(null); 
-          setTimeout(() => window.location.reload(), 2000);
+          setTimeout(() => window.location.reload(), 1000);
         }}
         onRename={handleRename}
         currentTitle={quizToRename?.title || ""}
@@ -358,7 +358,7 @@ export default function Dashboard() {
         isOpen={!!quizForOptions}
         onClose={() => { 
           setQuizForOptions(null); 
-          setTimeout(() => window.location.reload(), 2000);
+          setTimeout(() => window.location.reload(), 1000);
         }}
         onSave={handleOptionsUpdate}
         quiz={quizForOptions}
