@@ -2,8 +2,9 @@
 import DeleteQuizModal from "@/components/DeleteQuizModal";
 import { useAuthContext } from "@/context/AuthContext";
 import deleteQuiz from "@/firebase/firestore/deleteQuiz";
+import getAllPublicQuizzes from "@/firebase/firestore/getAllPublicQuizzes";
 import getUserQuizzes from "@/firebase/firestore/getUserQuizzes";
-import { getPublicQuizzes } from "@/firebase/firestore/publicQuizzes";
+import { syncPublicQuiz } from "@/firebase/firestore/syncPublicQuiz";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { MdChecklist } from "react-icons/md";
@@ -62,17 +63,13 @@ export default function Dashboard() {
       setQuizzes(userQuizzes);
 
       // 2) Fetch public quizzes
-      const { result: publicQuizzesData, error: publicError } = await getPublicQuizzes();
+      const { result: publicQuizzesData, error: publicError } = await getAllPublicQuizzes();
       if (publicError) {
         console.error("Error fetching public quizzes:", publicError);
         return;
       }
 
-      // Filter out user's own quizzes from public quizzes
-      const filteredPublicQuizzes = publicQuizzesData.filter(
-        (quiz) => quiz.userId !== user.uid
-      );
-      setPublicQuizzes(filteredPublicQuizzes);
+      setPublicQuizzes(publicQuizzesData);
 
       setLoading(false);
     };
@@ -103,12 +100,19 @@ export default function Dashboard() {
       // Refresh quizzes
       const { result } = await getUserQuizzes(user.uid);
       setQuizzes(result);
+
+      // If the quiz is public, remove it from the public collection
+      if (selectedQuiz.public) {
+        const { error: syncError } = await syncPublicQuiz(selectedQuiz.id, selectedQuiz, false);
+        if (syncError) throw new Error(syncError);
+      }
     } catch (error) {
       console.error("Error deleting quiz:", error);
     } finally {
       setIsDeleting(false);
       setDeleteModalOpen(false); // close the modal
       setSelectedQuiz(null);
+      setTimeout(() => window.location.reload(), 2000); // refresh after a 2-second delay
     }
   };
 
@@ -119,6 +123,12 @@ export default function Dashboard() {
       const updatedQuiz = { ...quizToRename, title: newTitle };
       const { error } = await updateQuiz(user.uid, quizToRename.id, updatedQuiz);
       if (error) throw new Error(error);
+
+      // If the quiz is public, update its title in the public collection
+      if (quizToRename.public) {
+        const { error: syncError } = await syncPublicQuiz(quizToRename.id, updatedQuiz, true);
+        if (syncError) throw new Error(syncError);
+      }
 
       // Update local state
       setQuizzes((prev) =>
@@ -148,12 +158,16 @@ export default function Dashboard() {
       const updatedQuiz = { ...quizForOptions, ...options };
       const { error } = await updateQuiz(user.uid, quizForOptions.id, updatedQuiz);
       if (error) throw new Error(error);
-
+  
+      // Synchronize the public collection using syncPublicQuiz
+      const { error: syncError } = await syncPublicQuiz(quizForOptions.id, updatedQuiz, options.public);
+      if (syncError) throw new Error(syncError);
+  
       // Update local state
       setQuizzes((prev) =>
         prev.map((q) => (q.id === quizForOptions.id ? { ...q, ...options } : q))
       );
-
+  
       toast({
         title: "Success",
         description: "Quiz options updated successfully.",
@@ -212,7 +226,7 @@ export default function Dashboard() {
                     </p>
                   </CardHeader>
                   <CardFooter className="flex gap-2 pt-2">
-                    <Link href={`/dashboard/${formatTitle(quiz.title)}`} className="flex-1">
+                    <Link href={`/dashboard/${encodeURIComponent(formatTitle(quiz.title))}`} className="flex-1">
                       <Button className="w-full">View</Button>
                     </Link>
 
@@ -307,7 +321,7 @@ export default function Dashboard() {
                     </div>
                   </CardHeader>
                   <CardFooter className="flex gap-2 pt-2">
-                    <Link href={`/dashboard/${formatTitle(quiz.title)}`} className="flex-1">
+                    <Link href={`/dashboard/${encodeURIComponent(formatTitle(quiz.title))}`} className="flex-1">
                       <Button className="w-full">Take Quiz</Button>
                     </Link>
                   </CardFooter>
@@ -321,7 +335,10 @@ export default function Dashboard() {
       {/* Modals */}
       <DeleteQuizModal
         isOpen={deleteModalOpen}
-        onOpenChange={setDeleteModalOpen}
+        onOpenChange={(open) => { 
+          setDeleteModalOpen(open); 
+          if (!open) setTimeout(() => window.location.reload(), 2000);
+        }}
         onConfirm={handleDeleteConfirm}
         loading={isDeleting}
         quizTitle={selectedQuiz?.title}
@@ -329,14 +346,20 @@ export default function Dashboard() {
 
       <RenameQuizModal
         isOpen={!!quizToRename}
-        onClose={() => setQuizToRename(null)}
+        onClose={() => { 
+          setQuizToRename(null); 
+          setTimeout(() => window.location.reload(), 2000);
+        }}
         onRename={handleRename}
         currentTitle={quizToRename?.title || ""}
       />
 
       <QuizOptionsModal
         isOpen={!!quizForOptions}
-        onClose={() => setQuizForOptions(null)}
+        onClose={() => { 
+          setQuizForOptions(null); 
+          setTimeout(() => window.location.reload(), 2000);
+        }}
         onSave={handleOptionsUpdate}
         quiz={quizForOptions}
       />
