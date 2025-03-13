@@ -48,13 +48,13 @@ export default function QuizPage({ params }) {
       // First, try to fetch the quiz from the user's collection
       let { result, error } = await getQuizByTitle(
         user.uid,
-        decodeURIComponent(quizname).replace(/-/g, " ")
+        decodeURIComponent(quizname)
       );
   
       // If not found or an error occurs, try the public collection
       if (error || !result) {
         ({ result, error } = await getPublicQuizByTitle(
-          decodeURIComponent(quizname).replace(/-/g, " ")
+          decodeURIComponent(quizname)
         ));
       }
   

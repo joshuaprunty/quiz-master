@@ -1,9 +1,9 @@
 import {
-  getFirestore,
   collection,
+  getDocs,
+  getFirestore,
   query,
   where,
-  getDocs,
 } from "firebase/firestore";
 import firebase_app from "../config";
 
@@ -15,7 +15,7 @@ export default async function getQuizByTitle(userId, quizTitle) {
 
   try {
     const quizRef = collection(db, `users/${userId}/quizzes`);
-    const q = query(quizRef, where("title", "==", quizTitle));
+    const q = query(quizRef, where("slug", "==", quizTitle));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
