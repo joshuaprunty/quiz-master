@@ -225,8 +225,13 @@ export default function TextInput() {
 
     setIsSaving(true);
     try {
+      const slug = title
+        .toLowerCase()
+        .replace(/[\W_]+/g, "-")
+        .replace(/^-+|-+$/g, "");
       await saveQuiz(user.uid, {
         title,
+        slug,
         questions,
         public: isPublic,
       });

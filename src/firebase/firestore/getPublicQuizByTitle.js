@@ -5,7 +5,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 const getPublicQuizByTitle = async (quizTitle) => {
   try {
     const publicQuizRef = collection(db, "public_quizzes");
-    const q = query(publicQuizRef, where("title", "==", quizTitle));
+    const q = query(publicQuizRef, where("slug", "==", quizTitle));
     const querySnapshot = await getDocs(q);
     if (querySnapshot.empty) {
       return { result: null, error: "No public quiz found" };

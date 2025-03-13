@@ -120,7 +120,8 @@ export default function Dashboard() {
   const handleRename = async (newTitle) => {
     if (!quizToRename) return;
     try {
-      const updatedQuiz = { ...quizToRename, title: newTitle };
+      const slug = formatTitle(newTitle);
+      const updatedQuiz = { ...quizToRename, title: newTitle, slug };
       const { error } = await updateQuiz(user.uid, quizToRename.id, updatedQuiz);
       if (error) throw new Error(error);
 
@@ -187,7 +188,10 @@ export default function Dashboard() {
   // Format for URL
   const formatTitle = (title) => {
     if (!title) return "";
-    return title.replace(/ /g, "-");
+    return title
+      .toLowerCase()
+      .replace(/[\W_]+/g, "-")   // replace non-alphanumeric and underscore with '-'
+      .replace(/^-+|-+$/g, "");  // trim leading/trailing dashes
   };
 
   // Loading
@@ -226,7 +230,7 @@ export default function Dashboard() {
                     </p>
                   </CardHeader>
                   <CardFooter className="flex gap-2 pt-2">
-                    <Link href={`/dashboard/${encodeURIComponent(formatTitle(quiz.title))}`} className="flex-1">
+                    <Link href={`/dashboard/${encodeURIComponent(quiz.slug ?? formatTitle(quiz.title))}`} className="flex-1">
                       <Button className="w-full">View</Button>
                     </Link>
 
@@ -321,7 +325,7 @@ export default function Dashboard() {
                     </div>
                   </CardHeader>
                   <CardFooter className="flex gap-2 pt-2">
-                    <Link href={`/dashboard/${encodeURIComponent(formatTitle(quiz.title))}`} className="flex-1">
+                    <Link href={`/dashboard/${encodeURIComponent(quiz.slug ?? formatTitle(quiz.title))}`} className="flex-1">
                       <Button className="w-full">Take Quiz</Button>
                     </Link>
                   </CardFooter>
