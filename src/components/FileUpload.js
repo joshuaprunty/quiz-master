@@ -2,8 +2,10 @@
 
 import { useAuthContext } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import * as pdfjsLib from "pdfjs-dist";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -36,6 +38,7 @@ export default function TextInput() {
 
   // ================== 1. Basic local states ==================
   const [studyText, setStudyText] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
   const [topics, setTopics] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [uiState, setUiState] = useState("initial");
@@ -85,9 +88,42 @@ export default function TextInput() {
   // ================== 3. Drag-and-drop for uploading files ==================
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
-    const reader = new FileReader();
-    reader.onload = () => setStudyText(reader.result);
-    reader.readAsText(file);
+    if (!file) return;
+
+    setUploadStatus("Uploading...");
+
+    if (file.type === "application/pdf") {
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onload = async () => {
+        try {
+          const typedarray = new Uint8Array(reader.result);
+          const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+          let extractedText = "";
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(" ");
+            extractedText += pageText + "\n";
+          }
+          setStudyText(extractedText);
+          setUploadStatus("File uploaded and processed successfully.");
+        } catch (error) {
+          console.error("Error extracting PDF text:", error);
+          setUploadStatus("Error processing PDF file.");
+        }
+      };
+      reader.onerror = () => {
+        setUploadStatus("Error reading the PDF file.");
+      };
+    } else {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setStudyText(reader.result);
+        setUploadStatus("File uploaded successfully.");
+      };
+      reader.readAsText(file);
+    }
   }, []);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -134,7 +170,17 @@ export default function TextInput() {
 
     setIsAnalyzing(true);
     try {
-      const rawData = await analyzeText(studyText);
+      const MAX_CHARACTERS = 60000; // Adjust this value as needed
+      let textToAnalyze = studyText;
+      if (studyText.length > MAX_CHARACTERS) {
+        textToAnalyze = studyText.slice(0, MAX_CHARACTERS);
+        toast({
+          title: "Notice",
+          description: "Input text was too long and has been truncated for analysis.",
+        });
+      }
+
+      const rawData = await analyzeText(textToAnalyze);
       const parsedData = JSON.parse(rawData);
 
       // Default each topic's priority to 1
@@ -383,6 +429,11 @@ export default function TextInput() {
               </div>
             )}
           </div>
+          {uploadStatus && (
+            <p className="mt-2 text-center text-sm font-medium">
+              {uploadStatus}
+            </p>
+          )}
         </TabsContent>
       </Tabs>
 
