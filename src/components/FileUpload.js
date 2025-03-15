@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import * as pdfjsLib from "pdfjs-dist";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { splitTextPreservingStructure } from "./Chunker";
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 // UI Components
@@ -170,22 +171,21 @@ export default function TextInput() {
 
     setIsAnalyzing(true);
     try {
-      const MAX_CHARACTERS = 60000; // Adjust this value as needed
-      let textToAnalyze = studyText;
-      if (studyText.length > MAX_CHARACTERS) {
-        textToAnalyze = studyText.slice(0, MAX_CHARACTERS);
-        toast({
-          title: "Notice",
-          description: "Input text was too long and has been truncated for analysis.",
-        });
+      const MAX_TOKENS = 10000; // Adjust this value as needed
+      const textChunks = splitTextPreservingStructure(studyText, MAX_TOKENS);
+      console.log("Number of chunks:", textChunks.length);
+
+      let allTopics = [];
+      for (const chunk of textChunks) {
+        const rawData = await analyzeText(chunk);
+        const parsedData = JSON.parse(rawData);
+        allTopics = allTopics.concat(parsedData.topics);
       }
 
-      const rawData = await analyzeText(textToAnalyze);
-      const parsedData = JSON.parse(rawData);
 
       // Default each topic's priority to 1
       setTopics(
-        parsedData.topics.map((topic) => ({
+        allTopics.map((topic) => ({
           ...topic,
           priority: 1,
         }))
@@ -233,9 +233,17 @@ export default function TextInput() {
     setIsConfigModalOpen(false);
     setUiState("loading");
     try {
-      const data = await generateQuestions(studyText, config, enabledTopics);
+      const MAX_TOKENS = 10000;
+      const textChunks = splitTextPreservingStructure(studyText, MAX_TOKENS);
+
+      let allQuestions = [];
+      for (const chunk of textChunks) {
+        const data = await generateQuestions(chunk, config, enabledTopics);
+        allQuestions = allQuestions.concat(data);
+      }
+
       // Reset states
-      setQuestions(data);
+      setQuestions(allQuestions);
       setSelectedAnswers({});
       setCheckedAnswers({});
       setUiState("questions");
