@@ -6,6 +6,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { splitTextPreservingStructure } from "./Chunker";
+import Tesseract from "tesseract.js";
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 // UI Components
@@ -43,6 +44,8 @@ export default function TextInput() {
   const [topics, setTopics] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [uiState, setUiState] = useState("initial");
+  
+  const [forceOCR, setForceOCR] = useState(false); // New state for forcing OCR
 
   // Modal states
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -103,10 +106,27 @@ export default function TextInput() {
           let extractedText = "";
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
+
             const textContent = await page.getTextContent();
             const pageText = textContent.items.map(item => item.str).join(" ");
             extractedText += pageText + "\n";
+
+            let ocrText = "";
+            if (forceOCR) {
+              const viewport = page.getViewport({ scale: 2 });
+              const canvas = document.createElement("canvas");
+              canvas.width = viewport.width;
+              canvas.height = viewport.height;
+              const context = canvas.getContext("2d");
+              await page.render({ canvasContext: context, viewport }).promise;
+              const imgUrl = canvas.toDataURL("image/png");
+              const { data: { text } } = await Tesseract.recognize(imgUrl, "eng");
+              ocrText = text.trim();
+            }
+            extractedText += pageText + "\n" + ocrText + "\n";
           }
+
+          
           setStudyText(extractedText);
           setUploadStatus("File uploaded and processed successfully.");
         } catch (error) {
@@ -403,7 +423,7 @@ export default function TextInput() {
       >
         Copy Sample Input
       </Button>
-
+      
       {/* Tabs for text input vs file upload */}
       <Tabs defaultValue="paste" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -444,7 +464,17 @@ export default function TextInput() {
           )}
         </TabsContent>
       </Tabs>
-
+      {/* Toggle for OCR on PDF Files */}
+      <div className="px-4">
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={forceOCR}
+            onChange={(e) => setForceOCR(e.target.checked)}
+          />
+          <span>My PDF has images</span>
+        </label>
+      </div>
       {/* Analyze Topics Button */}
       <div className="flex gap-4">
         <Button
